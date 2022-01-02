@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
+    "tets": "jest",
     "dev": "webpack --mode development"
   },
   "keywords": [],
