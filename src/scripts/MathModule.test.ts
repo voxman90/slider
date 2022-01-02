@@ -46,6 +46,7 @@ test("The method should return the round factor that makes both numbers integer"
 
 test("The method should return the sum of the two numbers", () => {
   expect(pm.add(0.1, 0.2)).toStrictEqual(0.3);
+  expect(pm.add(Number.MAX_SAFE_INTEGER - 1, 1)).toStrictEqual(Number.MAX_SAFE_INTEGER);
   expect(pm.add(Number.MAX_SAFE_INTEGER, 1)).toStrictEqual(Number.MAX_SAFE_INTEGER + 2);
   expect(pm.add(1, Number.MIN_VALUE)).toStrictEqual(1);
   expect(pm.add(0, Number.MIN_VALUE)).not.toStrictEqual(0);

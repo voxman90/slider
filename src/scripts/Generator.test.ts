@@ -15,4 +15,3 @@ test("The method should return a number from the range (left inclusive)", () => 
   expect(generator.getRandomNumber(x, y)).toBeLessThan(y);
   expect(generator.getRandomNumber(x, x)).toStrictEqual(x);
 });
-
