@@ -60,7 +60,7 @@ class MathModule {
   }
 
   private _fixed(a: number): number {
-    const FRACTION_DIGITS = 16;
+    const FRACTION_DIGITS = 12;
     return globalThis.parseFloat(a.toFixed(FRACTION_DIGITS));
   }
 }

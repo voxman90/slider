@@ -1,11 +1,10 @@
 import Generator from './Generator';
 import PercentageScale from './PercentageScale';
 
-const g = new Generator();
 const scale = new PercentageScale(0, 1);
 
 test("This method should reflect the value on the scale", () => {
-  const x = g.getRandomInt(0, 1e+10);
+  const x = Generator.getRandomInt(0, 1e+10);
   scale.setRatio(-x, x);
   expect(scale.reflectOnScale(-x)).toStrictEqual(0)
   expect(scale.reflectOnScale(0)).toStrictEqual(50);
