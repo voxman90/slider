@@ -103,9 +103,9 @@ describe("Testing set type configuration", () => {
       expect(dp.getPoint(1)).toStrictEqual(20);
       dp.resetCurrentStateToInitial();
 
-      const dpWithLargeStep = initDataProcessor(config, { step: 4, points })
+      const dpWithLargeStep = initDataProcessor(config, { step: 4, points });
       expect(dpWithLargeStep.movePoint(0, tooLargeOffset)).toBeTruthy();
-      expect(dpWithLargeStep.getPoint(0)).toStrictEqual(20);
+      expect(dpWithLargeStep.getPoint(0)).toStrictEqual(18);
       expect(dpWithLargeStep.movePoint(1, tooLargeOffset)).toBeTruthy();
       expect(dpWithLargeStep.getPoint(1)).toStrictEqual(24);
     });

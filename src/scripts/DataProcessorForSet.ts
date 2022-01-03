@@ -96,8 +96,6 @@ class DataProcessorForSet extends DataProcessor {
   }
 
   protected _initConfig(config: Partial<Configuration>) {
-    this._step = this._isStepValid(config.step) ? config.step : 1;
-
     this._isSetValid(config.set);
     this._set = [...config.set];
 
@@ -109,6 +107,8 @@ class DataProcessorForSet extends DataProcessor {
 
     this._scale.setRatio(minIndex, maxIndex);
     this.resetCurrentStateToInitial();
+
+    this._step = this._isStepValid(config.step) ? config.step : 1;
   }
 
   private _isStepValid(step: unknown): step is number {
