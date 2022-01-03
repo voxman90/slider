@@ -111,16 +111,12 @@ class DataProcessorForSet extends DataProcessor {
     this._step = this._isStepValid(config.step) ? config.step : 1;
   }
 
-  private _isStepValid(step: unknown): step is number {
+  protected _isStepValid(step: unknown): step is number {
     if (!this._isInteger(step)) {
       return false;
     }
 
-    const lengthOfGivenSubset = this.max - this.min;
-    return (
-      0 < step
-      && step <= lengthOfGivenSubset
-    );
+    return super._isStepValid(step);
   }
 
   private _isSetValid(set: unknown): asserts set is Array<NonBottomValue> {

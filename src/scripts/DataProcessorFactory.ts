@@ -1,4 +1,5 @@
 import DataProcessor from "./DataProcessor";
+import DataProcessorForRange from "./DataProcessorForRange";
 import DataProcessorForSet from "./DataProcessorForSet";
 import { Configuration } from "./Types";
 
@@ -6,7 +7,7 @@ function DataProcessorFactory(config: Partial<Configuration>): DataProcessor {
   const type = config.type;
   switch (type) {
     case "range": {
-      // return new DataProcessorForRange(config);
+      return new DataProcessorForRange(config);
     }
     case "set": {
       return new DataProcessorForSet(config);

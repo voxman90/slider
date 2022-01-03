@@ -11,7 +11,7 @@ describe("Testing set type configuration", () => {
   const config: Partial<Configuration> = {
     type: 'set',
     set: [...ALPHABET],
-  }
+  };
 
   describe("Testing the 'setPoint' method", () => {
     const points = [5, 10, 15, 20];
@@ -108,6 +108,90 @@ describe("Testing set type configuration", () => {
       expect(dpWithLargeStep.getPoint(0)).toStrictEqual(18);
       expect(dpWithLargeStep.movePoint(1, tooLargeOffset)).toBeTruthy();
       expect(dpWithLargeStep.getPoint(1)).toStrictEqual(24);
+    });
+  });
+});
+
+describe("Testing range type configuration", () => {
+  const config: Partial<Configuration> = {
+    type: 'range',
+  };
+
+  describe("Testing the 'setPoint' method", () => {
+    const range = [-1, 1];
+    const points = [0.1, 0.2, 0.3];
+    const step = 0.1;
+    const dp = initDataProcessor(config, { points, range, step });
+
+    it("should return false for inappropriate index", () => {
+      expect(dp.setPoint(4, 0)).toBeFalsy();
+      expect(dp.setPoint(-1, 0)).toBeFalsy();
+    });
+
+    it("should return true for appropriate index", () => {
+      const numberOfPoints = dp.numberOfPoints;
+      const lastPointIndex = numberOfPoints - 1;
+      const appropriateIndex = Generator.getRandomInt(0, lastPointIndex);
+      const pointValue = dp.getPoint(appropriateIndex);
+      expect(dp.setPoint(appropriateIndex, pointValue)).toBeTruthy();
+      dp.resetCurrentStateToInitial();
+    });
+
+    it("should return false if value don't match point borders", () => {
+      expect(dp.setPoint(0, -1.01)).toBeFalsy();
+      expect(dp.setPoint(1, 0.09)).toBeFalsy();
+      expect(dp.setPoint(1, 0.31)).toBeFalsy();
+      expect(dp.setPoint(2, 1.01)).toBeFalsy();
+    });
+
+    it("should return true if value match point borders", () => {
+      expect(dp.setPoint(0, -1)).toBeTruthy();
+      expect(dp.setPoint(0, 0.2)).toBeTruthy();
+      expect(dp.setPoint(2, 0.2)).toBeTruthy();
+      expect(dp.setPoint(2, 1)).toBeTruthy();
+      dp.resetCurrentStateToInitial();
+    });
+  });
+
+  describe("Testing the 'movePoint' method", () => {
+    const points = [0, 0.5];
+    const range = [0, 1];
+    const step = 0.1;
+    const dp = initDataProcessor(config, { points, range, step });
+
+    it("should return false for inappropriate index", () => {
+      expect(dp.movePoint(2, 0)).toBeFalsy();
+      expect(dp.movePoint(-1, 0)).toBeFalsy();
+    });
+
+    it("should return true for appropriate index and change point value", () => {
+      expect(dp.movePoint(0, 0.5)).toBeTruthy();
+      expect(dp.getPoint(0)).toStrictEqual(0.5);
+      expect(dp.movePoint(1, 0.5)).toBeTruthy();
+      expect(dp.getPoint(1)).toStrictEqual(1);
+      dp.resetCurrentStateToInitial();
+    });
+
+    it("should take negative offset", () => {
+      expect(dp.movePoint(1, -0.3)).toBeTruthy();
+      expect(dp.getPoint(1)).toStrictEqual(0.2);
+      dp.resetCurrentStateToInitial();
+    });
+
+    it("should return false if offset is insignificant (less then 0.5 of step value)", () => {
+      expect(dp.movePoint(0, 0.04)).toBeFalsy();
+      expect(dp.movePoint(0, 0.05)).toBeTruthy();
+      dp.resetCurrentStateToInitial();
+    });
+
+    it("if the offset don't match borders, should return true and shift to the largest suitable value (in steps)", () => {
+      expect(dp.movePoint(1, 1)).toBeTruthy();
+      expect(dp.getPoint(1)).toStrictEqual(1);
+      dp.resetCurrentStateToInitial();
+
+      const dpWithLargeStep = initDataProcessor(config, { step: 0.4, points, range });
+      expect(dpWithLargeStep.movePoint(1, 100)).toBeTruthy();
+      expect(dpWithLargeStep.getPoint(1)).toStrictEqual(0.9);
     });
   });
 });

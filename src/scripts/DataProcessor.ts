@@ -204,6 +204,14 @@ abstract class DataProcessor {
     }
   }
 
+  protected _isStepValid(step: number): boolean {
+    const lengthOfRange = this.max - this.min;
+    return (
+      0 < step
+      && step <= lengthOfRange
+    );
+  }
+
   protected _isMatchRange(positionValue: number): boolean {
     return (
       this._isMatchMinBorder(positionValue)
