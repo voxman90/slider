@@ -23,26 +23,24 @@ class DataProcessorForRange extends DataProcessor {
   }
 
   public setMinBorder(minBorder: number): boolean {
-    if (
-      Number.isFinite(minBorder)
-      && minBorder < this.max
-      && this._isMatchRightBorder(this.minBorderIndex, minBorder)
-    ) {
-      this._setMinBorderUnsafe(minBorder);
-      return true;
+    if (Number.isFinite(minBorder)) {
+      return super.setMinBorder(minBorder);
     }
 
     return false;
   }
 
   public setMaxBorder(maxBorder: number): boolean {
-    if (
-      Number.isFinite(maxBorder)
-      && this.min < maxBorder
-      && this._isMatchLeftBorder(this.maxBorderIndex, maxBorder)
-    ) {
-      this._setMaxBorderUnsafe(maxBorder);
-      return true;
+    if (Number.isFinite(maxBorder)) {
+      return super.setMaxBorder(maxBorder);
+    }
+
+    return false;
+  }
+
+  public setStep(step: number): boolean {
+    if (Number.isFinite(step)) {
+      return super.setStep(step);
     }
 
     return false;
@@ -85,15 +83,15 @@ class DataProcessorForRange extends DataProcessor {
     this._scale.setRatio(min, max);
     this.resetCurrentStateToInitial();
 
-    this._step = this._isStepValid(config.step) ? config.step : this._mm.sub(this.max, this.min);
+    this._step = this._isStepValid(config.step) ? config.step : this._mm.sub(this.maxBorder, this.minBorder);
   }
 
   protected _isStepValid(step: unknown): step is number {
-    if (!this._isFinite(step)) {
-      return false;
+    if (this._isFinite(step)) {
+      return super._isStepValid(step);
     }
 
-    return super._isStepValid(step);
+    return false;
   }
 
   private _isRangeValid(range: unknown): asserts range is [number, number] {

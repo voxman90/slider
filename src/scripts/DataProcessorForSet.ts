@@ -1,4 +1,4 @@
-import { Configuration, NonBottomValue } from './Types';
+import { Configuration, NonBottomValue, primitive } from './Types';
 import { ALPHABET } from './Constants';
 import DataProcessor from './DataProcessor';
 
@@ -30,69 +30,62 @@ class DataProcessorForSet extends DataProcessor {
     return this._set.length - 1;
   }
 
-  public get sizeOfSet(): number {
-    return this._set.length;
-  }
-
-  public get firstPointIndex(): number {
-    return 2;
-  }
-
-  public get lastPointIndex(): number {
-    return this._currentState.length - 3;
-  }
-
-  public get numberOfPoints(): number {
-    return this._currentState.length - 4;
-  }
-
-  public get minBorderIndex(): number {
-    return 1;
-  }
-
-  public get maxBorderIndex(): number {
-    return this._currentState.length - 2;
-  }
-
-  public setMinBorder(minIndex: number): boolean {
-    const isLessThenMaxBorder = minIndex < this.max;
-    const isLessThenOrEqualToFirstPoint = this._isMatchRightBorder(this.minBorderIndex, minIndex);
+  public setMinBorder(minBorder: number): boolean {
     if (
-      Number.isInteger(minIndex)
-      && this._isNonNegative(minIndex)
-      && isLessThenMaxBorder
-      && isLessThenOrEqualToFirstPoint
+      Number.isInteger(minBorder)
+      && 0 <= minBorder
     ) {
-      this._setMinBorderUnsafe(minIndex);
-      return true;
+      return super.setMinBorder(minBorder);
     }
 
     return false;
   }
 
-  public setMaxBorder(maxIndex: number): boolean {
-    const isGreaterThenMinBorder = this.min < maxIndex;
-    const isGreaterThenOrEqualToLastPoint = this._isMatchLeftBorder(this.maxBorderIndex, maxIndex);
-    const isLessThenOrEqualToLastIndexOfSet = maxIndex <= this.lastIndexOfSet;
+  public setMaxBorder(maxBorder: number): boolean {
     if (
-      Number.isInteger(maxIndex)
-      && isGreaterThenMinBorder
-      && isGreaterThenOrEqualToLastPoint
-      && isLessThenOrEqualToLastIndexOfSet
+      Number.isInteger(maxBorder)
+      && maxBorder <= this.lastIndexOfSet
     ) {
-      this._setMaxBorderUnsafe(maxIndex);
-      return true;
+      return super.setMaxBorder(maxBorder);
+    }
+
+    return false;
+  }
+
+  public setStep(step: number): boolean {
+    if (Number.isInteger(step)) {
+      return super.setStep(step);
     }
 
     return false;
   }
 
   public setPoint(pointIndex: number, pointValue: number): boolean {
-    if (!this._isInteger(pointValue)) {
-      return false;
+    if (Number.isInteger(pointValue)) {
+      return super.setPoint(pointIndex, pointValue);
     }
 
-    return super.setPoint(pointIndex, pointValue);
+    return false;
+  }
+
+  public getPointView(pointIndex: number): NonNullable<primitive> {
+    const setItem = this._set[pointIndex];
+    if (
+      typeof setItem === 'object'
+      || typeof setItem === 'function'
+    ) {
+      return setItem.toString();
+    }
+
+    return setItem;
+  }
+
+  public getPointsView(): Array<NonNullable<primitive>> {
+    const view: Array<NonNullable<primitive>> = []
+    this._forEachPoint((_, i) => {
+      view.push(this.getPointView(i));
+    })
+    return view;
   }
 
   protected _initConfig(config: Partial<Configuration>) {
@@ -102,7 +95,7 @@ class DataProcessorForSet extends DataProcessor {
     const minIndex = config.min || 0;
     const maxIndex = config.max || this.lastIndexOfSet;
     const points = config.points || [minIndex, maxIndex];
-    this._initialState = [0, minIndex, ...points, maxIndex, this.lastIndexOfSet];
+    this._initialState = [minIndex, ...points, maxIndex];
     this._isInitialStateValid();
 
     this._scale.setRatio(minIndex, maxIndex);
@@ -112,11 +105,11 @@ class DataProcessorForSet extends DataProcessor {
   }
 
   protected _isStepValid(step: unknown): step is number {
-    if (!this._isInteger(step)) {
-      return false;
+    if (this._isInteger(step)) {
+      return super._isStepValid(step);
     }
 
-    return super._isStepValid(step);
+    return false;
   }
 
   private _isSetValid(set: unknown): asserts set is Array<NonBottomValue> {

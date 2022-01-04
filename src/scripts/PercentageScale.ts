@@ -1,19 +1,19 @@
 import MathModule from "./MathModule";
 
 class PercentageScale {
+  public min: number;
   private _mm: MathModule;
   private _ratio: number;
-  private _min: number;
 
   constructor(min: number, max: number, mm?: MathModule) {
     this._mm = mm || new MathModule();
-    this._min = 0;
+    this.min = 0;
     this._ratio = 1;
     this.setRatio(min, max);
   }
 
   get max() {
-    return this.shift(this._min, 100);
+    return this.shift(this.min, 100);
   }
 
   public setRatio(min: number, max: number): boolean {
@@ -21,7 +21,7 @@ class PercentageScale {
       return false;
     }
 
-    this._min = min;
+    this.min = min;
     this._ratio = this._calculateRatio(min, max);
     return true;
   }
@@ -40,7 +40,7 @@ class PercentageScale {
   }
 
   public reflectOnScale(point: number): number {
-    return this.convertOffsetToPercent(this._min, point);
+    return this.convertOffsetToPercent(this.min, point);
   }
 
   public convertOffsetToPercent(referencePoint: number, point: number): number {

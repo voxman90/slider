@@ -26,7 +26,7 @@ describe("Testing set type configuration", () => {
       const numberOfPoints = dp.numberOfPoints;
       const lastPointIndex = numberOfPoints - 1;
       const appropriateIndex = Generator.getRandomInt(0, lastPointIndex);
-      const pointValue = dp.getPoint(appropriateIndex);
+      const pointValue = dp.getPointValue(appropriateIndex);
       expect(dp.setPoint(appropriateIndex, pointValue)).toBeTruthy();
       dp.resetCurrentStateToInitial();
     });
@@ -67,23 +67,23 @@ describe("Testing set type configuration", () => {
 
     it("should return true for appropriate index and change point value", () => {
       expect(dp.movePoint(0, 1)).toBeTruthy();
-      expect(dp.getPoint(0)).toStrictEqual(11);
+      expect(dp.getPointValue(0)).toStrictEqual(11);
       expect(dp.movePoint(1, 5)).toBeTruthy();
-      expect(dp.getPoint(1)).toStrictEqual(25);
+      expect(dp.getPointValue(1)).toStrictEqual(25);
       dp.resetCurrentStateToInitial();
     });
 
     it("should take negative offset", () => {
       expect(dp.movePoint(0, -5)).toBeTruthy();
-      expect(dp.getPoint(0)).toStrictEqual(5);
+      expect(dp.getPointValue(0)).toStrictEqual(5);
       dp.resetCurrentStateToInitial();
     });
 
     it("should take not integer offset", () => {
       expect(dp.movePoint(0, -5.1)).toBeTruthy();
-      expect(dp.getPoint(0)).toStrictEqual(5);
+      expect(dp.getPointValue(0)).toStrictEqual(5);
       expect(dp.movePoint(1, 3.6)).toBeTruthy();
-      expect(dp.getPoint(1)).toStrictEqual(24);
+      expect(dp.getPointValue(1)).toStrictEqual(24);
       dp.resetCurrentStateToInitial();
     });
 
@@ -96,18 +96,18 @@ describe("Testing set type configuration", () => {
     it("if the offset don't match borders, should return true and shift to the largest suitable value (in steps)", () => {
       const tooLargeOffset = Generator.getRandomInt(ALPHABET.length + 1, ALPHABET.length + 100);
       expect(dp.movePoint(0, tooLargeOffset)).toBeTruthy();
-      expect(dp.getPoint(0)).toStrictEqual(20);
+      expect(dp.getPointValue(0)).toStrictEqual(20);
       expect(dp.movePoint(1, tooLargeOffset)).toBeTruthy();
-      expect(dp.getPoint(1)).toStrictEqual(25);
+      expect(dp.getPointValue(1)).toStrictEqual(25);
       expect(dp.movePoint(1, -tooLargeOffset)).toBeTruthy();
-      expect(dp.getPoint(1)).toStrictEqual(20);
+      expect(dp.getPointValue(1)).toStrictEqual(20);
       dp.resetCurrentStateToInitial();
 
       const dpWithLargeStep = initDataProcessor(config, { step: 4, points });
       expect(dpWithLargeStep.movePoint(0, tooLargeOffset)).toBeTruthy();
-      expect(dpWithLargeStep.getPoint(0)).toStrictEqual(18);
+      expect(dpWithLargeStep.getPointValue(0)).toStrictEqual(18);
       expect(dpWithLargeStep.movePoint(1, tooLargeOffset)).toBeTruthy();
-      expect(dpWithLargeStep.getPoint(1)).toStrictEqual(24);
+      expect(dpWithLargeStep.getPointValue(1)).toStrictEqual(24);
     });
   });
 });
@@ -132,7 +132,7 @@ describe("Testing range type configuration", () => {
       const numberOfPoints = dp.numberOfPoints;
       const lastPointIndex = numberOfPoints - 1;
       const appropriateIndex = Generator.getRandomInt(0, lastPointIndex);
-      const pointValue = dp.getPoint(appropriateIndex);
+      const pointValue = dp.getPointValue(appropriateIndex);
       expect(dp.setPoint(appropriateIndex, pointValue)).toBeTruthy();
       dp.resetCurrentStateToInitial();
     });
@@ -166,15 +166,15 @@ describe("Testing range type configuration", () => {
 
     it("should return true for appropriate index and change point value", () => {
       expect(dp.movePoint(0, 0.5)).toBeTruthy();
-      expect(dp.getPoint(0)).toStrictEqual(0.5);
+      expect(dp.getPointValue(0)).toStrictEqual(0.5);
       expect(dp.movePoint(1, 0.5)).toBeTruthy();
-      expect(dp.getPoint(1)).toStrictEqual(1);
+      expect(dp.getPointValue(1)).toStrictEqual(1);
       dp.resetCurrentStateToInitial();
     });
 
     it("should take negative offset", () => {
       expect(dp.movePoint(1, -0.3)).toBeTruthy();
-      expect(dp.getPoint(1)).toStrictEqual(0.2);
+      expect(dp.getPointValue(1)).toStrictEqual(0.2);
       dp.resetCurrentStateToInitial();
     });
 
@@ -186,12 +186,12 @@ describe("Testing range type configuration", () => {
 
     it("if the offset don't match borders, should return true and shift to the largest suitable value (in steps)", () => {
       expect(dp.movePoint(1, 1)).toBeTruthy();
-      expect(dp.getPoint(1)).toStrictEqual(1);
+      expect(dp.getPointValue(1)).toStrictEqual(1);
       dp.resetCurrentStateToInitial();
 
       const dpWithLargeStep = initDataProcessor(config, { step: 0.4, points, range });
       expect(dpWithLargeStep.movePoint(1, 100)).toBeTruthy();
-      expect(dpWithLargeStep.getPoint(1)).toStrictEqual(0.9);
+      expect(dpWithLargeStep.getPointValue(1)).toStrictEqual(0.9);
     });
   });
 });

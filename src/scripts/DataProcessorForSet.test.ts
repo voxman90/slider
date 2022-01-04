@@ -109,35 +109,35 @@ describe("Test the functionality of the methods that set the min or max border",
   it("The min border cannot be less than zero", () => {
     const dp = dataProcessorInitializer([15], 0, 25);
     expect(dp.setMinBorder(-1)).toBeFalsy();
-    expect(dp.min).toStrictEqual(0);
+    expect(dp.minBorder).toStrictEqual(0);
   });
 
   it("The min border must be less or equal than the first point index", () => {
     const dp = dataProcessorInitializer([15], 0, 25);
     const index = Generator.getRandomInt(0, 15);
     expect(dp.setMinBorder(index)).toBeTruthy();
-    expect(dp.min).toStrictEqual(index);
+    expect(dp.minBorder).toStrictEqual(index);
   });
 
   it("The min border cannot be greater than the first point index", () => {
     const dp = dataProcessorInitializer([15], 0, 25);
     const index = Generator.getRandomInt(16, 25);
     expect(dp.setMinBorder(index)).toBeFalsy();
-    expect(dp.min).toStrictEqual(0);
+    expect(dp.minBorder).toStrictEqual(0);
   });
 
   it("The max border cannot be less than the last point index", () => {
     const dp = dataProcessorInitializer([15, 20], 0, 25);
     const index = Generator.getRandomInt(0, 19);
     expect(dp.setMaxBorder(index)).toBeFalsy();
-    expect(dp.max).toStrictEqual(25);
+    expect(dp.maxBorder).toStrictEqual(25);
   });
 
   it("The max border must be greater or equal than the last point index", () => {
     const dp = dataProcessorInitializer([15, 20], 0, 25);
     const index = Generator.getRandomInt(20, 25);
     expect(dp.setMaxBorder(index)).toBeTruthy();
-    expect(dp.max).toStrictEqual(index);
+    expect(dp.maxBorder).toStrictEqual(index);
   });
 
   it("The min border must be less than the max border", () => {

@@ -95,13 +95,13 @@ describe("Test the functionality of the methods that set the min or max border",
     expect(dp.setMaxBorder(-Infinity)).toBeFalsy();
     expect(dp.setMaxBorder(Infinity)).toBeFalsy();
     expect(dp.setMaxBorder(NaN)).toBeFalsy();
-    expect(dp.min).toStrictEqual(-100);
+    expect(dp.minBorder).toStrictEqual(-100);
   });
 
   it("The min border must be less or equal than the first point", () => {
     const val = Generator.getRandomNumber(-100, 50);
     expect(dp.setMinBorder(val)).toBeTruthy();
-    expect(dp.min).toStrictEqual(val);
+    expect(dp.minBorder).toStrictEqual(val);
     dp.resetCurrentStateToInitial();
   });
 
@@ -114,26 +114,26 @@ describe("Test the functionality of the methods that set the min or max border",
   it("The min border can't be greater than the first point", () => {
     const val = Generator.getRandomNumber(50, 99);
     expect(dp.setMinBorder(val)).toBeFalsy();
-    expect(dp.min).toStrictEqual(-100);
+    expect(dp.minBorder).toStrictEqual(-100);
   });
 
   it("The max border must be finite", () => {
     expect(dp.setMaxBorder(-Infinity)).toBeFalsy();
     expect(dp.setMaxBorder(Infinity)).toBeFalsy();
     expect(dp.setMaxBorder(NaN)).toBeFalsy();
-    expect(dp.max).toStrictEqual(100);
+    expect(dp.maxBorder).toStrictEqual(100);
   });
 
   it("The max border can't be less than the last point", () => {
     const val = Generator.getRandomNumber(-150, 49);
     expect(dp.setMaxBorder(val)).toBeFalsy();
-    expect(dp.max).toStrictEqual(100);
+    expect(dp.maxBorder).toStrictEqual(100);
   });
 
   it("The max border must be greater or equal than the last point", () => {
     const val = Generator.getRandomNumber(50, 100);
     expect(dp.setMaxBorder(val)).toBeTruthy();
-    expect(dp.max).toStrictEqual(val);
+    expect(dp.maxBorder).toStrictEqual(val);
     dp.resetCurrentStateToInitial();
   });
 
