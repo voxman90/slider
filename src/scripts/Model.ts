@@ -87,6 +87,10 @@ class Model extends Subject {
     return false;
   }
 
+  public resetStateToInitial() {
+    this._dp.resetCurrentStateToInitial();
+  }
+
   protected _notify() {
     this._observers.forEach((observer) => {
       observer.update(this);
