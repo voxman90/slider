@@ -7,13 +7,13 @@ const initDataProcessor = (config: Partial<Configuration>, extraConfigProperties
   return DataProcessorFactory(Object.assign(config, extraConfigProperties));
 }
 
-describe("Testing set type configuration", () => {
+describe("Testing set type configuration:\n", () => {
   const config: Partial<Configuration> = {
     type: 'set',
     set: [...ALPHABET],
   };
 
-  describe("Testing the 'setPoint' method", () => {
+  describe("Testing the 'setPoint' method:\n", () => {
     const points = [5, 10, 15, 20];
     const dp = initDataProcessor(config, { points });
 
@@ -56,7 +56,7 @@ describe("Testing set type configuration", () => {
     });
   });
 
-  describe("Testing the 'movePoint' method", () => {
+  describe("Testing the 'movePoint' method:\n", () => {
     const points = [10, 20];
     const dp = initDataProcessor(config, { points });
 
@@ -110,14 +110,58 @@ describe("Testing set type configuration", () => {
       expect(dpWithLargeStep.getPointValue(1)).toStrictEqual(24);
     });
   });
+
+  describe("Testing the 'addPoint' method:\n", () => {
+    const points = [5, 10, 15];
+    const dp = initDataProcessor(config, { points });
+
+    it("Should return false if index incorrect", () => {
+      expect(dp.addPoint(-1, 0)).toBeFalsy();
+      expect(dp.addPoint(4, 15)).toBeFalsy();
+    });
+
+    it("Should return false if value isn't within the borders", () => {
+      expect(dp.addPoint(0, 6)).toBeFalsy();
+      expect(dp.addPoint(1, 16)).toBeFalsy();
+      expect(dp.addPoint(2, 27)).toBeFalsy();
+    });
+
+    it("Should return true if index correct and value is within borders", () => {
+      expect(dp.addPoint(1, 6)).toBeTruthy();
+      expect(dp.getPointValues()).toStrictEqual([5, 6, 10, 15]);
+      dp.resetCurrentStateToInitial();
+    });
+  });
+
+  describe("Testing the 'removePoint' method:\n", () => {
+    const points = [5, 10];
+    const dp = initDataProcessor(config, { points });
+
+    it("Should return false if index incorrect", () => {
+      expect(dp.removePoint(-1)).toBeFalsy();
+      expect(dp.removePoint(2)).toBeFalsy();
+    });
+
+    it("Should return true if index correct", () => {
+      expect(dp.removePoint(1)).toBeTruthy();
+      expect(dp.getPointValues()).toStrictEqual([5]);
+      dp.resetCurrentStateToInitial();
+    });
+
+    it("Should return false if there is last point", () => {
+      expect(dp.removePoint(1)).toBeTruthy();
+      expect(dp.removePoint(0)).toBeFalsy();
+      dp.resetCurrentStateToInitial();
+    });
+  });
 });
 
-describe("Testing range type configuration", () => {
+describe("Testing range type configuration:\n", () => {
   const config: Partial<Configuration> = {
     type: 'range',
   };
 
-  describe("Testing the 'setPoint' method", () => {
+  describe("Testing the 'setPoint' method:\n", () => {
     const range = [-1, 1];
     const points = [0.1, 0.2, 0.3];
     const step = 0.1;
