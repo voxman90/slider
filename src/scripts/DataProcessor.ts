@@ -148,12 +148,12 @@ abstract class DataProcessor {
       this._isValidPointIndex(pointIndex)
       || pointIndex === this.numberOfPoints
     );
-
-    const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    if (isValidInsertPosition) {
-      this._currentState.splice(positionIndex, 0, pointValue);
+    if (!isValidInsertPosition) {
+      return false;
     }
 
+    const positionIndex = this._getPositionIndexForPoint(pointIndex);
+    this._currentState.splice(positionIndex, 0, pointValue);
     if (this._isMatchBorders(positionIndex, pointValue)) {
       return true;
     }
@@ -169,6 +169,7 @@ abstract class DataProcessor {
     ) {
       const positionIndex = this._getPositionIndexForPoint(pointIndex);
       this._currentState.splice(positionIndex, 1);
+      return true;
     }
 
     return false;
