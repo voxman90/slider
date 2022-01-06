@@ -68,6 +68,33 @@ describe("Testing 'Model' for range type configuration:\n", () => {
     });
   });
 
+  describe("Testing the 'setPoints' method:\n", () => {
+    const incorrectPointValues = [
+      [1, 2, 3],
+      [1, 9, 8, 10],
+      [-1, 0, 5, 10],
+      [0, 5, 10, 15],
+    ];
+    it("Should set correct point values", () => {
+      incorrectPointValues.forEach((points) => {
+        expect(model.setPoints(points)).toBeFalsy();
+      });
+      model.resetStateToInitial();
+    });
+
+    const correctPointValues = [
+      [1, 2, 3, 4],
+      [1, 2, 3, 4, 5],
+    ];
+    it("Should set correct point values and return true", () => {
+      correctPointValues.forEach((points) => {
+        expect(model.setPoints(points)).toBeTruthy();
+      });
+      expect(observerUpdateSpy).toBeCalledTimes(2);
+      model.resetStateToInitial();
+    });
+  });
+
   describe("Testing the 'setMinBorder' method:\n", () => {
     it("Should return false when value not finite", () => {
       expect(model.setMinBorder(-Infinity)).toBeFalsy();
@@ -110,7 +137,6 @@ describe("Testing 'Model' for range type configuration:\n", () => {
     });
 
     it("Should set max border and return true when value is within the borders", () => {
-      console.log(model.getPointValues())
       expect(model.setMaxBorder(15)).toBeTruthy();
       expect(model.getMaxBorder()).toStrictEqual(15);
       expect(observerUpdateSpy).toBeCalledTimes(1);

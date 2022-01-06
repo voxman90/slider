@@ -14,8 +14,8 @@ abstract class DataProcessor {
   constructor(mm?: MathModule) {
     this._mm = mm || new MathModule();
     this._scale = new PercentageScale(0, 1, this._mm);
-    this._initialState = [];
-    this._currentState = [];
+    this._initialState = [0, 0, 1];
+    this._currentState = [0, 0, 1];
     this._step = 1;
   }
 
@@ -27,7 +27,7 @@ abstract class DataProcessor {
     return this._getPosition(this.maxBorderIndex);
   }
 
-  public get range(): [min: number, max: number] {
+  public get range(): [minBorder: number, maxBorder: number] {
     return [this.minBorder, this.maxBorder];
   }
 
@@ -40,7 +40,7 @@ abstract class DataProcessor {
   }
 
   public get numberOfPositions(): number {
-    return this._currentState.length;
+    return this.lastPositionIndex - this.firstPositionIndex + 1;
   }
 
   public get firstPointIndex(): number {
@@ -52,7 +52,7 @@ abstract class DataProcessor {
   }
 
   public get numberOfPoints(): number {
-    return this._currentState.length - 2;
+    return this.lastPointIndex - this.firstPointIndex + 1;
   }
 
   public get minBorderIndex(): number {
@@ -64,8 +64,10 @@ abstract class DataProcessor {
   }
 
   public setMinBorder(minBorder: number): boolean {
+    const maxStepSize = this.maxBorder - minBorder;
     if (
       minBorder < this.maxBorder
+      && this._step <= maxStepSize
       && this._isMatchRightBorder(this.minBorderIndex, minBorder)
     ) {
       this._setMinBorderUnsafe(minBorder);
@@ -78,8 +80,10 @@ abstract class DataProcessor {
   }
 
   public setMaxBorder(maxBorder: number): boolean {
+    const maxStepSize = maxBorder - this.minBorder;
     if (
       this.minBorder < maxBorder
+      && this._step <= maxStepSize
       && this._isMatchLeftBorder(this.maxBorderIndex, maxBorder)
     ) {
       this._setMaxBorderUnsafe(maxBorder);
@@ -92,29 +96,82 @@ abstract class DataProcessor {
 
   public setStep(step: number): boolean {
     const maxStepSize = this.maxBorder - this.minBorder;
-    if (
-      step <= 0
-      || step > maxStepSize
-    ) {
-      return false;
+    if (0 < step && step <= maxStepSize) {
+      this._step = step;
+      return true;
     }
 
-    this._step = step;
-    return true;
+    return false;
   }
 
   public setPoint(pointIndex: number, pointValue: number): boolean {
-    if (!this._isValidPointIndex(pointIndex)) {
+    if (
+      this._isValidPointIndex(pointIndex)
+      && this._isPointMatchBorders(pointIndex, pointValue)
+    ) {
+      this._setPointUnsafe(pointIndex, pointValue);
+      return true;
+    }
+
+    return false;
+  }
+
+  public setPoints(points: Array<number>): boolean {
+    if (points.length < this.numberOfPoints) {
       return false;
     }
+
+    const currentState = [...this._currentState];
+    this._forEachPoint((_, i) => this._setPointUnsafe(i, this.maxBorder));
+    const isValidPoints = this._everyPoint((_, i) => {
+      return this.setPoint(i, points[i])
+    });
+    if (isValidPoints) {
+      return true;
+    }
+
+    this._currentState = [...currentState];
+    return false;
+  }
+
+  public prependPoint(pointValue: number): boolean {
+    return this.addPoint(0, pointValue);
+  }
+
+  public appendPoint(pointValue: number): boolean {
+    return this.addPoint(this.numberOfPoints, pointValue);
+  }
+
+  public addPoint(pointIndex: number, pointValue: number): boolean {
+    const currentState = [...this._currentState];
+    const isValidInsertPosition = (
+      this._isValidPointIndex(pointIndex)
+      || pointIndex === this.numberOfPoints
+    );
 
     const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    if (!this._isMatchBorders(positionIndex, pointValue)) {
-      return false;
+    if (isValidInsertPosition) {
+      this._currentState.splice(positionIndex, 0, pointValue);
     }
 
-    this._setPositionUnsafe(positionIndex, pointValue);
-    return true;
+    if (this._isMatchBorders(positionIndex, pointValue)) {
+      return true;
+    }
+
+    this._currentState = [...currentState];
+    return false;
+  }
+
+  public removePoint(pointIndex: number): boolean {
+    if (
+      this.numberOfPoints !== 1
+      && this._isValidPointIndex(pointIndex)
+    ) {
+      const positionIndex = this._getPositionIndexForPoint(pointIndex);
+      this._currentState.splice(positionIndex, 1);
+    }
+
+    return false;
   }
 
   public movePoint(pointIndex: number, offset: number): boolean {
@@ -129,9 +186,8 @@ abstract class DataProcessor {
       return false;
     }
 
-    const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    const targetValue = this._getTargetValue(positionIndex, numberOfStepsRounded, direction);
-    this._setPositionUnsafe(positionIndex, targetValue);
+    const targetValue = this._getTargetValue(pointIndex, numberOfStepsRounded, direction);
+    this._setPointUnsafe(pointIndex, targetValue);
     return true;
   }
 
@@ -193,10 +249,28 @@ abstract class DataProcessor {
   public getDistances(): Array<number> {
     const distances = [];
     this._forEachPoint((_, pointIndex) => {
-      distances.push(this._getDistanceToLeftBorder(pointIndex));
+      const positionIndex = this._getPositionIndexForPoint(pointIndex);
+      distances.push(this._getDistanceToLeftBorder(positionIndex));
     })
     distances.push(this._getDistanceToRightBorder(this.lastPointIndex));
     return distances;
+  }
+
+  protected _setPositionUnsafe(positionIndex: number, positionValue: number): void {
+    this._currentState[positionIndex] = positionValue;
+  }
+
+  protected _setMinBorderUnsafe(minBorderValue: number): void {
+    this._setPositionUnsafe(this.minBorderIndex, minBorderValue);
+  }
+
+  protected _setMaxBorderUnsafe(maxBorderValue: number): void {
+    this._setPositionUnsafe(this.maxBorderIndex, maxBorderValue);
+  }
+
+  protected _setPointUnsafe(pointIndex: number, pointValue: number): void {
+    const positionIndex = this._getPositionIndexForPoint(pointIndex);
+    return this._setPositionUnsafe(positionIndex, pointValue);
   }
 
   protected _getPositionIndexForPoint(pointIndex: number): number {
@@ -207,7 +281,8 @@ abstract class DataProcessor {
     return this._currentState[positionIndex];
   }
 
-  protected _getTargetValue(positionIndex: number, numberOfSteps: number, direction: direction): number {
+  protected _getTargetValue(pointIndex: number, numberOfSteps: number, direction: direction): number {
+    const positionIndex = this._getPositionIndexForPoint(pointIndex);
     const currentValue = this._getPosition(positionIndex);
     let targetValue = this._shiftValueInSteps(currentValue, numberOfSteps, direction);
     if (this._isMatchBorder(positionIndex, targetValue, direction)) {
@@ -270,21 +345,21 @@ abstract class DataProcessor {
     return this._mm.mul(numberOfSteps, this._step);
   }
 
-  protected _setMinBorderUnsafe(minBorderValue: number): void {
-    this._setPositionUnsafe(this.minBorderIndex, minBorderValue);
+  protected _everyPoint(condition: (pointValue: number, pointIndex: number, currentState: Array<number>) => boolean): boolean {
+    for (let i = 0; i < this.numberOfPoints; i += 1) {
+      const positionIndex = this._getPositionIndexForPoint(i);
+      if (!condition(this._currentState[positionIndex], i, this._currentState)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  protected _setMaxBorderUnsafe(maxBorderValue: number): void {
-    this._setPositionUnsafe(this.maxBorderIndex, maxBorderValue);
-  }
-
-  protected _setPositionUnsafe(positionIndex: number, positionValue: number): void {
-    this._currentState[positionIndex] = positionValue;
-  }
-
-  protected _forEachPoint(callback: (val: number, index: number, arr: Array<number>) => void): void {
-    for (let i = this.firstPointIndex; i <= this.lastPointIndex; i += 1) {
-      callback(this._currentState[i], i, this._currentState);
+  protected _forEachPoint(callback: (pointValue: number, pointIndex: number, currentState: Array<number>) => void): void {
+    for (let pointIndex = 0; pointIndex < this.numberOfPoints; pointIndex += 1) {
+      const positionIndex = this._getPositionIndexForPoint(pointIndex );
+      callback(this._currentState[positionIndex], pointIndex, this._currentState);
     }
   }
 
@@ -309,6 +384,11 @@ abstract class DataProcessor {
 
   protected _isMatchMaxBorder(positionValue: number): boolean {
     return positionValue <= this.maxBorder;
+  }
+
+  protected _isPointMatchBorders(pointIndex: number, pointValue: number): boolean {
+    const positionIndex = this._getPositionIndexForPoint(pointIndex);
+    return this._isMatchBorders(positionIndex, pointValue);
   }
 
   protected _isMatchBorders(positionIndex: number, positionValue: number): boolean {
