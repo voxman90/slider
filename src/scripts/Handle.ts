@@ -21,6 +21,11 @@ class Handle {
     this._orientation = orientation;
   }
 
+  public setId(id: number) {
+    this._id = id;
+    this._elem.attr('data-item', id);
+  }
+
   public appendTo(target: JQuery<HTMLElement>) {
     this._elem.appendTo(target);
   }

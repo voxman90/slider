@@ -10,6 +10,11 @@ export type left = -1;
 export type right = 1;
 export type direction = left | right;
 
+type ArrayLengthMutationKeys = "pup" | "push" | "shift" | "unshift" | 'splice' | number;
+export type FixedLengthArray<T extends Array<NonUndefined>> =
+  Pick<T, Exclude<keyof T, ArrayLengthMutationKeys>>
+  & { [Symbol.iterator]: () => IterableIterator<NonUndefined> };
+
 export interface Configuration {
   type: 'range' | 'set';
   step: number;
