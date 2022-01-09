@@ -14,7 +14,8 @@ class Model extends Subject {
   public setPointValue(pointIndex: number, pointValue: number): boolean {
     const isValueSet = this._dp.setPoint(pointIndex, pointValue);
     if (isValueSet) {
-      this._notify();
+      const changes = { scope: 'point', index: pointIndex };
+      this._notify(changes);
       return true;
     }
 
@@ -24,7 +25,8 @@ class Model extends Subject {
   public setPoints(points: Array<number>): boolean {
     const isPointsSet = this._dp.setPoints(points);
     if (isPointsSet) {
-      this._notify();
+      const changes = { scope: 'all' };
+      this._notify(changes);
       return true;
     }
 
@@ -34,7 +36,8 @@ class Model extends Subject {
   public setStep(step: number): boolean {
     const isStepSet = this._dp.setStep(step);
     if (isStepSet) {
-      this._notify();
+      const changes = { scope: 'all' };
+      this._notify(changes);
       return true;
     }
 
@@ -44,7 +47,8 @@ class Model extends Subject {
   public setMinBorder(minBorder: number): boolean {
     const isMinBorderSet = this._dp.setMinBorder(minBorder);
     if (isMinBorderSet) {
-      this._notify();
+      const changes = { scope: 'all' };
+      this._notify(changes);
       return true;
     }
 
@@ -54,7 +58,8 @@ class Model extends Subject {
   public setMaxBorder(maxBorder: number): boolean {
     const isMaxBorderSet = this._dp.setMaxBorder(maxBorder);
     if (isMaxBorderSet) {
-      this._notify();
+      const changes = { scope: 'all' };
+      this._notify(changes);
       return true;
     }
 
@@ -99,11 +104,13 @@ class Model extends Subject {
 
   public resetStateToInitial() {
     this._dp.resetCurrentStateToInitial();
+    const changes = { scope: 'all' };
+    this._notify(changes);
   }
 
-  protected _notify() {
+  protected _notify(changes: object) {
     this._observers.forEach((observer) => {
-      observer.update(this);
+      observer.update(this, changes);
     });
   }
 }

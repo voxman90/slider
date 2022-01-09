@@ -22,7 +22,7 @@ export interface Configuration {
   max: number;
   range: [number, number];
   points: Array<number>;
-  connects: Array<0 | 1>;
+  connects: Array<boolean>;
   set: Array<NonBottomValue>;
   direction: 'horizontal' | 'vertical';
   orientation: 'ltr' | 'rtl';

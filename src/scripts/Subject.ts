@@ -24,7 +24,7 @@ abstract class Subject {
     return false;
   }
 
-  protected abstract _notify(data?: Object): void;
+  protected abstract _notify(data?: object): void;
 }
 
 export default Subject;
