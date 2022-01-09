@@ -33,3 +33,24 @@ export interface Configuration {
   cacheCapacity: number;
   prettifier: (x: string) => string;
 }
+
+export interface ModelChanges {
+  scope: string,
+  index?: number,
+}
+
+export interface HandleState {
+  leftIndent: number,
+  position: number,
+  rightIndent: number,
+  view: NonNullable<primitive>,
+}
+
+export interface SliderState {
+  scale: Array<number>,
+  distances: Array<number>,
+  values: Array<NonNullable<primitive>>,
+  min: NonNullable<primitive>,
+  max: NonNullable<primitive>,
+  step: number,
+}

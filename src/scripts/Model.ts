@@ -1,7 +1,7 @@
 import Subject from './Subject';
 import DataProcessor from './DataProcessor';
 import DataProcessorFactory from './DataProcessorFactory';
-import { Configuration } from './Types';
+import { Configuration, primitive } from './Types';
 
 class Model extends Subject {
   private _dp: DataProcessor;
@@ -74,12 +74,20 @@ class Model extends Subject {
     return this._dp.getPointValues();
   }
 
-  public getDistanceToBorders(pointIndex: number): [number, number] {
+  public getDistanceToBorders(pointIndex: number): Array<number> {
     return this._dp.getDistanceToBorders(pointIndex);
+  }
+
+  public getDistanceToBordersOnScale(pointIndex: number): Array<number> {
+    return this._dp.getDistanceToBordersOnScale(pointIndex);
   }
 
   public getDistances() {
     return this._dp.getDistances();
+  }
+
+  public getDistancesOnScale() {
+    return this._dp.getDistancesOnScale();
   }
 
   public getPointLocationOnScale(pointIndex: number): number {
@@ -90,12 +98,28 @@ class Model extends Subject {
     return this._dp.getPointScale();
   }
 
+  public getPointView(pointIndex: number): NonNullable<primitive> {
+    return this._dp.getPointView(pointIndex);
+  }
+
+  public getPointsView(): Array<NonNullable<primitive>> {
+    return this._dp.getPointsView();
+  }
+
   public getMinBorder() {
     return this._dp.minBorder;
   }
 
   public getMaxBorder() {
     return this._dp.maxBorder;
+  }
+
+  public getMinBorderView() {
+    return this._dp.getMinBorderView();
+  }
+
+  public getMaxBorderView() {
+    return this._dp.getMaxBorderView();
   }
 
   public getStep() {

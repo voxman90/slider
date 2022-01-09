@@ -1,4 +1,4 @@
-import { Configuration, direction, orientation } from './Types';
+import { Configuration, direction, HandleState, orientation, SliderState } from './Types';
 import Subject from './Subject';
 import Handle from './Handle';
 import { HORIZONTAL, LTR } from './Constants';
@@ -23,6 +23,14 @@ class View extends Subject {
     this._handles = [];
     this._direction = LTR;
     this._orientation = HORIZONTAL;
+  }
+
+  public drawSlider(sliderState: SliderState) {
+
+  }
+
+  public drawHandle(index: number, handleState: HandleState) {
+
   }
 
   protected _createBase(baseClass: string = className.BASE) {

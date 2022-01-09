@@ -88,6 +88,14 @@ class DataProcessorForSet extends DataProcessor {
     return view;
   }
 
+  public getMinBorderView(): NonNullable<primitive> {
+    return this.getPointView(this.minBorder);
+  }
+
+  public getMaxBorderView(): NonNullable<primitive> {
+    return this.getPointView(this.maxBorder);
+  }
+
   protected _initConfig(config: Partial<Configuration>) {
     this._isSetValid(config.set);
     this._set = [...config.set];

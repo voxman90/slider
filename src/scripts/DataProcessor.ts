@@ -239,12 +239,24 @@ abstract class DataProcessor {
     return this.getPointValues();
   }
 
-  public getDistanceToBorders(pointIndex: number): [number, number] {
+  public getMinBorderView(): NonNullable<primitive> {
+    return this.minBorder;
+  }
+
+  public getMaxBorderView(): NonNullable<primitive> {
+    return this.maxBorder;
+  }
+
+  public getDistanceToBorders(pointIndex: number): Array<number> {
     const positionIndex = this._getPositionIndexForPoint(pointIndex);
     return [
       this._getDistanceToLeftBorder(positionIndex),
       this._getDistanceToRightBorder(positionIndex)
     ];
+  }
+
+  public getDistanceToBordersOnScale(pointIndex: number): Array<number> {
+    return this.getDistanceToBorders(pointIndex).map(this._scale.convertToPercent);
   }
 
   public getDistances(): Array<number> {
@@ -255,6 +267,11 @@ abstract class DataProcessor {
     })
     distances.push(this._getDistanceToRightBorder(this.lastPointIndex));
     return distances;
+  }
+
+  public getDistancesOnScale(): Array<number> {
+    const distances = this.getDistances();
+    return distances.map(this._scale.convertToPercent);
   }
 
   protected _setPositionUnsafe(positionIndex: number, positionValue: number): void {

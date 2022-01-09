@@ -2,6 +2,7 @@ import Model from './Model';
 import View from './View';
 import Observer from './Observer';
 import Subject from './Subject';
+import { HandleState, ModelChanges, SliderState } from './Types';
 
 class Presenter extends Observer {
   protected _model: Model | null;
@@ -14,7 +15,10 @@ class Presenter extends Observer {
   }
 
   public update(subject: Subject, data: object = {}): void {
-    if (this._isModel(subject)) {
+    if (
+      this._isModel(subject)
+      && this._model === subject
+    ) {
       this._processModelUpdate(subject, data);
     }
 
@@ -22,10 +26,6 @@ class Presenter extends Observer {
       this._processViewUpdate(subject, data);
     }
   }
-
-  public _processModelUpdate(model: Model, changes: object) {}
-
-  public _processViewUpdate(view: View, event: object) {}
 
   public attachModel(model: Model): boolean {
     if (this._model === null) {
@@ -66,6 +66,56 @@ class Presenter extends Observer {
     }
     view.detach(this);
   }
+
+  protected _processModelUpdate(model: Model, changes: Partial<ModelChanges>) {
+    if (changes.scope === 'point') {
+      const index = changes.index;
+      if (index !== undefined) {
+        this._views.forEach((view) => {
+          const handleState = this._getHandleState(model, index);
+          this._updateHandle(view, index, handleState);
+        });
+      }
+    } else {
+      this._views.forEach((view) => {
+        const sliderState = this._getSliderState(model);
+        this._updateSlider(view, sliderState);
+      });
+    }
+  }
+
+  protected _updateHandle(view: View, index: number, handleState: HandleState) {
+    view.drawHandle(index, handleState);
+  }
+
+  protected _updateSlider(view: View, sliderState: SliderState) {
+    view.drawSlider(sliderState);
+  }
+
+  protected _getSliderState(model: Model) {
+    return {
+      scale: model.getPointScale(),
+      values: model.getPointsView(),
+      distances: model.getDistancesOnScale(),
+      min: model.getMinBorderView(),
+      max: model.getMaxBorderView(),
+      step: model.getStep(),
+    };
+  }
+
+  protected _getHandleState(model: Model, index: number) {
+    const position = model.getPointLocationOnScale(index);
+    const [leftIndent, rightIndent] = model.getDistanceToBordersOnScale(index);
+    const view = model.getPointView(index);
+    return {
+      position,
+      leftIndent,
+      rightIndent,
+      view,
+    };
+  }
+
+  protected _processViewUpdate(view: View, event: unknown) {}
 
   protected _isModel(subject: Subject): subject is Model {
     return subject instanceof Model;
