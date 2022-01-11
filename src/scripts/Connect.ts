@@ -50,8 +50,8 @@ class Connect {
 
   protected _getTemplate(id: number = 0, connectClass: string = className.CONNECT) {
     connectClass += (this._orientation === HORIZONTAL)
-      ? (modifier.ORIENTATION_HORIZONTAL)
-      : (modifier.ORIENTATION_VERTICAL);
+      ? modifier.ORIENTATION_HORIZONTAL
+      : modifier.ORIENTATION_VERTICAL;
     return $('<div>')
       .addClass(connectClass)
       .attr('data-item', id)

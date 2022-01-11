@@ -6,8 +6,10 @@ const className = {
   HANDLE: 'slider__handle',
 };
 
-const Modifier = {
-  ACTIVE: 'slider__handle_active',
+const modifier = {
+  ACTIVE: `${className.HANDLE}_active`,
+  ORIENTATION_HORIZONTAL: `${className.HANDLE}_orientation_horizontal`,
+  ORIENTATION_VERTICAL: `${className.HANDLE}_orientation_vertical`,
 };
 
 class Handle {
@@ -38,7 +40,7 @@ class Handle {
     this._elem.remove();
   }
 
-  public moveHandle(offset: number): void {
+  public move(offset: number): void {
     if (this._orientation === HORIZONTAL) {
       this._translateX(offset);
     }
@@ -47,11 +49,13 @@ class Handle {
   }
 
   protected _getTemplate(id: number = 0, handleClass: string = className.HANDLE) {
-    const elem = $('<div>');
-    elem.attr('data-item', id);
-    elem.addClass(handleClass);
-    elem.css('transform', 'translate(0px, 0px)');
-    return elem;
+    handleClass += (this._orientation === HORIZONTAL)
+    ? modifier.ORIENTATION_HORIZONTAL
+    : modifier.ORIENTATION_VERTICAL;
+    return $('<div>')
+      .addClass(handleClass)
+      .attr('data-item', id)
+      .css('transform', 'translate(0px, 0px)');
   }
 
   protected _translateX(x: number = 0): void {
