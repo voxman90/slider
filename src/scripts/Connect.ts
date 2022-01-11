@@ -6,11 +6,13 @@ const className = {
   CONNECT: 'slider__connect',
 };
 
-const Modifier = {
-  VISIBLE: 'slider__connect_visible',
+const modifier = {
+  VISIBLE: `${className.CONNECT}_visible`,
+  ORIENTATION_HORIZONTAL: `${className.CONNECT}_orientation_horizontal`,
+  ORIENTATION_VERTICAL: `${className.CONNECT}_orientation_vertical`,
 };
 
-class Handle {
+class Connect {
   protected _id: number;
   protected _elem: JQuery<HTMLElement>;
   protected _orientation: orientation;
@@ -38,7 +40,7 @@ class Handle {
     this._elem.remove();
   }
 
-  public moveHandle(offset: number): void {
+  public move(offset: number): void {
     if (this._orientation === HORIZONTAL) {
       this._translateX(offset);
     }
@@ -47,11 +49,13 @@ class Handle {
   }
 
   protected _getTemplate(id: number = 0, connectClass: string = className.CONNECT) {
-    const elem = $('<div>');
-    elem.attr('data-item', id);
-    elem.addClass(connectClass);
-    elem.css('transform', 'translate(0px, 0px) scale(0, 0)');
-    return elem;
+    connectClass += (this._orientation === HORIZONTAL)
+      ? (modifier.ORIENTATION_HORIZONTAL)
+      : (modifier.ORIENTATION_VERTICAL);
+    return $('<div>')
+      .addClass(connectClass)
+      .attr('data-item', id)
+      .css('transform', 'translate(0px, 0px) scale(0, 0)');
   }
 
   protected _translateX(x: number = 0, scaleX: number = 0): void {
@@ -63,4 +67,4 @@ class Handle {
   }
 }
 
-export default Handle;
+export default Connect;
