@@ -48,6 +48,14 @@ class Connect {
     this._translateY(offset);
   }
 
+  public setModifierVisible() {
+    this._elem.addClass(modifier.VISIBLE);
+  }
+
+  public unsetModifierVisible() {
+    this._elem.removeClass(modifier.VISIBLE);
+  }
+
   protected _getTemplate(id: number = 0, connectClass: string = className.CONNECT) {
     connectClass += (this._orientation === HORIZONTAL)
       ? modifier.ORIENTATION_HORIZONTAL

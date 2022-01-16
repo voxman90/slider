@@ -24,8 +24,8 @@ export interface Configuration {
   points: Array<number>;
   connects: Array<boolean>;
   set: Array<NonBottomValue>;
-  direction: 'horizontal' | 'vertical';
-  orientation: 'ltr' | 'rtl';
+  direction: 'ltr' | 'rtl';
+  orientation: orientation;
   hasTooltips: boolean;
   hasScale: boolean;
   scaleMap: Array<number>;
@@ -41,7 +41,7 @@ export interface ModelChanges {
 
 export interface HandleState {
   leftIndent: number,
-  position: number,
+  offset: number,
   rightIndent: number,
   view: NonNullable<primitive>,
 }

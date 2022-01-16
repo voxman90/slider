@@ -48,6 +48,14 @@ class Handle {
     this._translateY(offset);
   }
 
+  public setModifierActive() {
+    this._elem.addClass(modifier.ACTIVE);
+  }
+
+  public unsetModifierActive() {
+    this._elem.removeClass(modifier.ACTIVE);
+  }
+
   protected _getTemplate(id: number = 0, handleClass: string = className.HANDLE) {
     handleClass += (this._orientation === HORIZONTAL)
     ? modifier.ORIENTATION_HORIZONTAL
