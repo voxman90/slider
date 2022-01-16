@@ -50,9 +50,20 @@ class View extends Subject {
     const { scale, distances, values, min, max, step } = sliderState;
   }
 
-  public setHandleState(index: number, handleState: HandleState) {
-    const { offset, leftIndent, rightIndent } = handleState;
-    const handle = this._handles[index];
+  public setHandles(states: Array<HandleState>) {
+    states.forEach((state, id) => {
+      this.setHandleState(id, state);
+    });
+  }
+
+  public setHandleState(id: number, state: HandleState) {
+    const { offset, leftIndent, rightIndent } = state;
+    const handle = this._handles[id];
+    const leftConnect = this._connects[id];
+    const rightConnect = this._connects[id + 1];
+    handle.move(offset);
+    leftConnect.resize(leftIndent);
+    rightConnect.moveAndResize(offset, rightIndent);
   }
 
   public appendSliderTo(target: JQuery<HTMLElement>) {

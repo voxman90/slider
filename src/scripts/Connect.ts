@@ -16,11 +16,15 @@ class Connect {
   protected _id: number;
   protected _elem: JQuery<HTMLElement>;
   protected _orientation: orientation;
+  protected _offset: number;
+  protected _size: number;
 
-  constructor(id: number = 0, orientation: orientation = HORIZONTAL, connectClass: string = className.CONNECT) {
+  constructor(id: number = 0, orientation: orientation = HORIZONTAL, classes: string = className.CONNECT) {
     this._id = id;
-    this._elem = this._getTemplate(id, connectClass);
+    this._elem = this._getTemplate(id, classes);
     this._orientation = orientation;
+    this._offset = 0;
+    this._size = 0;
   }
 
   public setId(id: number) {
@@ -40,38 +44,45 @@ class Connect {
     this._elem.remove();
   }
 
-  public move(offset: number): void {
-    if (this._orientation === HORIZONTAL) {
-      this._translateX(offset);
-    }
-
-    this._translateY(offset);
+  public move(offset: number = 0): void {
+    this._offset = offset;
+    this._transform(offset, this._size);
   }
 
-  public setModifierVisible() {
+  public resize(size: number = 0): void {
+    this._size = size;
+    this._transform(this._offset, size);
+  }
+
+  public moveAndResize(offset: number = 0, size: number = 0) {
+    this._offset = offset;
+    this._size = size;
+    this._transform(offset, size);
+  }
+
+  public makeVisible() {
     this._elem.addClass(modifier.VISIBLE);
   }
 
-  public unsetModifierVisible() {
+  public makeInvisible() {
     this._elem.removeClass(modifier.VISIBLE);
   }
 
-  protected _getTemplate(id: number = 0, connectClass: string = className.CONNECT) {
-    connectClass += (this._orientation === HORIZONTAL)
+  protected _getTemplate(id: number, classes: string) {
+    classes += (this._orientation === HORIZONTAL)
       ? modifier.ORIENTATION_HORIZONTAL
       : modifier.ORIENTATION_VERTICAL;
-    return $('<div>')
-      .addClass(connectClass)
+    return $('<div>').addClass(classes)
       .attr('data-item', id)
       .css('transform', 'translate(0px, 0px) scale(0, 0)');
   }
 
-  protected _translateX(x: number = 0, scaleX: number = 0): void {
-    this._elem.css('transform', `translate(${x}%, 0px) scale(${scaleX}%, 0)`);
-  }
+  protected _transform(offset: number, size: number): void {
+    if (this._orientation === HORIZONTAL) {
+      this._elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 0)`);
+    }
 
-  protected _translateY(y: number = 0, scaleY: number = 0): void {
-    this._elem.css('transform', `translate(0px, ${y}%) scale(0, ${scaleY}%)`);
+    this._elem.css('transform', `translate(0px, ${offset}%) scale(0, ${size}%)`);
   }
 }
 
