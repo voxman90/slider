@@ -43,6 +43,7 @@ class Handle {
   }
 
   public move(offset: number = 0): void {
+    this._offset = offset;
     this._transform(offset);
   }
 
