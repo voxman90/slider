@@ -16,11 +16,13 @@ class Handle {
   protected _id: number;
   protected _elem: JQuery<HTMLElement>;
   protected _orientation: orientation;
+  protected _offset: number;
 
   constructor(id: number = 0, orientation: orientation = HORIZONTAL, handleClass: string = className.HANDLE) {
     this._id = id;
-    this._elem = this._getTemplate(id, handleClass);
     this._orientation = orientation;
+    this._elem = this._getTemplate(id, handleClass);
+    this._offset = 0;
   }
 
   public setId(id: number) {
@@ -40,38 +42,33 @@ class Handle {
     this._elem.remove();
   }
 
-  public move(offset: number): void {
-    if (this._orientation === HORIZONTAL) {
-      this._translateX(offset);
-    }
-
-    this._translateY(offset);
+  public move(offset: number = 0): void {
+    this._transform(offset);
   }
 
-  public setModifierActive() {
+  public setActive() {
     this._elem.addClass(modifier.ACTIVE);
   }
 
-  public unsetModifierActive() {
+  public unsetActive() {
     this._elem.removeClass(modifier.ACTIVE);
   }
 
-  protected _getTemplate(id: number = 0, handleClass: string = className.HANDLE) {
-    handleClass += (this._orientation === HORIZONTAL)
-    ? modifier.ORIENTATION_HORIZONTAL
-    : modifier.ORIENTATION_VERTICAL;
-    return $('<div>')
-      .addClass(handleClass)
+  protected _getTemplate(id: number, classes: string) {
+    const modifiers = (this._orientation === HORIZONTAL)
+      ? modifier.ORIENTATION_HORIZONTAL
+      : modifier.ORIENTATION_VERTICAL;
+    return $('<div>').addClass([classes, modifiers])
       .attr('data-item', id)
       .css('transform', 'translate(0px, 0px)');
   }
 
-  protected _translateX(x: number = 0): void {
-    this._elem.css('transform', `translate(${x}%, 0px)`);
-  }
+  protected _transform(offset: number): void {
+    if (this._orientation === HORIZONTAL) {
+      this._elem.css('transform', `translate(${offset}%, 0px)`);
+    }
 
-  protected _translateY(y: number = 0): void {
-    this._elem.css('transform', `translate(0px, ${y}%)`);
+    this._elem.css('transform', `translate(0px, ${offset}%)`);
   }
 }
 
