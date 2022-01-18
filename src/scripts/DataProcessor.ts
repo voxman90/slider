@@ -1,11 +1,11 @@
-import PercentageScale from "./PercentageScale";
+import PercentageProcessor from "./PercentageProcessor";
 import MathModule from "./MathModule";
 import { Configuration, direction, primitive } from "./Types";
 import { LEFT_DIRECTION, RIGHT_DIRECTION } from './Constants';
 
 abstract class DataProcessor {
   protected _mm: MathModule;
-  protected _scale: PercentageScale;
+  protected _pp: PercentageProcessor;
   protected _initialState: Array<number>;
   protected _currentState: Array<number>;
   protected _step: number;
@@ -13,7 +13,7 @@ abstract class DataProcessor {
 
   constructor(mm?: MathModule) {
     this._mm = mm || new MathModule();
-    this._scale = new PercentageScale(0, 1, this._mm);
+    this._pp = new PercentageProcessor(0, 1, this._mm);
     this._initialState = [0, 0, 1];
     this._currentState = [0, 0, 1];
     this._step = 1;
@@ -71,8 +71,8 @@ abstract class DataProcessor {
       && this._isMatchRightBorder(this.minBorderIndex, minBorder)
     ) {
       this._setMinBorderUnsafe(minBorder);
-      this._scale.min = minBorder;
-      this._scale.setRatio(minBorder, this.maxBorder);
+      this._pp.min = minBorder;
+      this._pp.setBorders(minBorder, this.maxBorder);
       return true;
     }
 
@@ -87,7 +87,7 @@ abstract class DataProcessor {
       && this._isMatchLeftBorder(this.maxBorderIndex, maxBorder)
     ) {
       this._setMaxBorderUnsafe(maxBorder);
-      this._scale.setRatio(this.minBorder, maxBorder);
+      this._pp.setBorders(this.minBorder, maxBorder);
       return true;
     }
 
@@ -220,13 +220,13 @@ abstract class DataProcessor {
 
   public getPointLocationOnScale(pointIndex: number) {
     const pointValue = this.getPointValue(pointIndex);
-    return this._scale.reflectOnScale(pointValue);
+    return this._pp.reflectOnScale(pointValue);
   }
 
   public getPointScale(): Array<number> {
     const scale: Array<number> = [];
     this._forEachPoint((pointValue) => {
-      scale.push(this._scale.reflectOnScale(pointValue));
+      scale.push(this._pp.reflectOnScale(pointValue));
     })
     return scale;
   }
@@ -256,7 +256,7 @@ abstract class DataProcessor {
   }
 
   public getDistanceToBordersOnScale(pointIndex: number): Array<number> {
-    return this.getDistanceToBorders(pointIndex).map(this._scale.convertToPercent);
+    return this.getDistanceToBorders(pointIndex).map(this._pp.convertToPercent);
   }
 
   public getDistances(): Array<number> {
@@ -271,7 +271,7 @@ abstract class DataProcessor {
 
   public getDistancesOnScale(): Array<number> {
     const distances = this.getDistances();
-    return distances.map(this._scale.convertToPercent);
+    return distances.map(this._pp.convertToPercent);
   }
 
   protected _setPositionUnsafe(positionIndex: number, positionValue: number): void {

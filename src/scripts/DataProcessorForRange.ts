@@ -80,7 +80,7 @@ class DataProcessorForRange extends DataProcessor {
     this._initialState = [min, ...points, max];
     this._isInitialStateValid();
 
-    this._scale.setRatio(min, max);
+    this._pp.setBorders(min, max);
     this.resetCurrentStateToInitial();
 
     this._step = this._isStepValid(config.step) ? config.step : this._mm.sub(this.maxBorder, this.minBorder);

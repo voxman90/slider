@@ -106,7 +106,7 @@ class DataProcessorForSet extends DataProcessor {
     this._initialState = [minIndex, ...points, maxIndex];
     this._isInitialStateValid();
 
-    this._scale.setRatio(minIndex, maxIndex);
+    this._pp.setBorders(minIndex, maxIndex);
     this.resetCurrentStateToInitial();
 
     this._step = this._isStepValid(config.step) ? config.step : 1;

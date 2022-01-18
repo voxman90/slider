@@ -47,10 +47,25 @@ export interface HandleState {
 }
 
 export interface SliderState {
-  scale: Array<number>,
-  distances: Array<number>,
+  positions: Array<HandleState>,
   values: Array<NonNullable<primitive>>,
   min: NonNullable<primitive>,
   max: NonNullable<primitive>,
   step: number,
 }
+
+interface PointState {
+  leftIndent: number,
+  offset: number,
+  rightIndent: number,
+  view: NonNullable<primitive>,
+}
+
+interface ModelState {
+  points: Array<PointState>,
+  min: NonNullable<primitive>,
+  max: NonNullable<primitive>,
+  step: number,
+}
+
+export { PointState, ModelState };

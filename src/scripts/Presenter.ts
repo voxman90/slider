@@ -72,27 +72,27 @@ class Presenter extends Observer {
       const index = changes.index;
       if (index !== undefined) {
         this._views.forEach((view) => {
-          const handleState = this._getHandleState(model, index);
+          const handleState = this._getPointState(model, index);
           this._updateHandle(view, index, handleState);
         });
       }
     } else {
       this._views.forEach((view) => {
-        const sliderState = this._getSliderState(model);
-        this._updateSlider(view, sliderState);
+        const modelState = this._getModelState(model);
+        this._updateSlider(view, modelState);
       });
     }
   }
 
   protected _updateHandle(view: View, index: number, handleState: HandleState) {
-    view.drawHandle(index, handleState);
+    view.setHandleState(index, handleState);
   }
 
   protected _updateSlider(view: View, sliderState: SliderState) {
-    view.drawSlider(sliderState);
+    view.setSliderState(sliderState);
   }
 
-  protected _getSliderState(model: Model) {
+  protected _getModelState(model: Model) {
     return {
       scale: model.getPointScale(),
       values: model.getPointsView(),
@@ -103,12 +103,22 @@ class Presenter extends Observer {
     };
   }
 
-  protected _getHandleState(model: Model, index: number) {
-    const position = model.getPointLocationOnScale(index);
+  protected _getPointPosition(model: Model, index: number) {
+    const offset = model.getPointLocationOnScale(index);
+    const [leftIndent, rightIndent] = model.getDistanceToBordersOnScale(index);
+    return {
+      offset,
+      leftIndent,
+      rightIndent,
+    }
+  }
+
+  protected _getPointState(model: Model, index: number) {
+    const offset = model.getPointLocationOnScale(index);
     const [leftIndent, rightIndent] = model.getDistanceToBordersOnScale(index);
     const view = model.getPointView(index);
     return {
-      position,
+      offset,
       leftIndent,
       rightIndent,
       view,
