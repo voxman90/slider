@@ -13,9 +13,9 @@ abstract class DataProcessor {
 
   constructor(mm?: MathModule) {
     this._mm = mm || new MathModule();
-    this._pp = new PercentageProcessor(0, 1, this._mm);
-    this._initialState = [0, 0, 1];
-    this._currentState = [0, 0, 1];
+    this._pp = new PercentageProcessor(0, 100, this._mm);
+    this._initialState = [0, 0, 100];
+    this._currentState = [0, 0, 100];
     this._step = 1;
   }
 
@@ -255,7 +255,7 @@ abstract class DataProcessor {
   }
 
   public getDistanceToBordersOnScale(pointIndex: number): Array<number> {
-    return this.getDistanceToBorders(pointIndex).map(this._pp.convertToPercent);
+    return this.getDistanceToBorders(pointIndex).map((val) => this._pp.convertToPercent(val));
   }
 
   public getDistances(): Array<number> {

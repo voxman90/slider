@@ -1,7 +1,7 @@
 import Subject from './Subject';
 import DataProcessor from './DataProcessor';
 import DataProcessorFactory from './DataProcessorFactory';
-import { Configuration, primitive } from './Types';
+import { Configuration, ModelState, PointState, primitive } from './Types';
 
 class Model extends Subject {
   private _dp: DataProcessor;
@@ -11,11 +11,14 @@ class Model extends Subject {
     this._dp = DataProcessorFactory(config);
   }
 
-  public setPointValue(pointIndex: number, pointValue: number): boolean {
-    const isValueSet = this._dp.setPoint(pointIndex, pointValue);
+  public notifyAll(): void {
+    this._notify({ scope: 'all' });
+  }
+
+  public setPointValue(index: number, val: number): boolean {
+    const isValueSet = this._dp.setPoint(index, val);
     if (isValueSet) {
-      const changes = { scope: 'point', index: pointIndex };
-      this._notify(changes);
+      this._notifyAboutPointChanges(index);
       return true;
     }
 
@@ -25,8 +28,7 @@ class Model extends Subject {
   public setPoints(points: Array<number>): boolean {
     const isPointsSet = this._dp.setPoints(points);
     if (isPointsSet) {
-      const changes = { scope: 'all' };
-      this._notify(changes);
+      this.notifyAll();
       return true;
     }
 
@@ -36,8 +38,7 @@ class Model extends Subject {
   public setStep(step: number): boolean {
     const isStepSet = this._dp.setStep(step);
     if (isStepSet) {
-      const changes = { scope: 'all' };
-      this._notify(changes);
+      this.notifyAll();
       return true;
     }
 
@@ -47,8 +48,7 @@ class Model extends Subject {
   public setMinBorder(minBorder: number): boolean {
     const isMinBorderSet = this._dp.setMinBorder(minBorder);
     if (isMinBorderSet) {
-      const changes = { scope: 'all' };
-      this._notify(changes);
+      this.notifyAll();
       return true;
     }
 
@@ -58,28 +58,56 @@ class Model extends Subject {
   public setMaxBorder(maxBorder: number): boolean {
     const isMaxBorderSet = this._dp.setMaxBorder(maxBorder);
     if (isMaxBorderSet) {
-      const changes = { scope: 'all' };
-      this._notify(changes);
+      this.notifyAll();
       return true;
     }
 
     return false;
   }
 
-  public getPointValue(pointIndex: number): number {
-    return this._dp.getPointValue(pointIndex);
+  public getState(): ModelState {
+    return {
+      points: this.getPoints(),
+      min: this.getMinBorderView(),
+      max: this.getMaxBorderView(),
+      step: this.getStep(),
+    };
+  }
+
+  public getPoints(): Array<PointState> {
+    const points = [];
+    for(let i = 0; i < this._dp.lastPointIndex; i += 1) {
+      points.push(this.getPointState(i));
+    }
+    return points;
+  }
+
+  public getPointState(index: number): PointState {
+    const offset = this.getPointLocationOnScale(index);
+    const [leftIndent, rightIndent] = this.getDistanceToBordersOnScale(index);
+    const view = this.getPointView(index);
+    return {
+      offset,
+      leftIndent,
+      rightIndent,
+      view,
+    };
+  }
+
+  public getPointValue(index: number): number {
+    return this._dp.getPointValue(index);
   }
 
   public getPointValues() {
     return this._dp.getPointValues();
   }
 
-  public getDistanceToBorders(pointIndex: number): Array<number> {
-    return this._dp.getDistanceToBorders(pointIndex);
+  public getDistanceToBorders(index: number): Array<number> {
+    return this._dp.getDistanceToBorders(index);
   }
 
-  public getDistanceToBordersOnScale(pointIndex: number): Array<number> {
-    return this._dp.getDistanceToBordersOnScale(pointIndex);
+  public getDistanceToBordersOnScale(index: number): Array<number> {
+    return this._dp.getDistanceToBordersOnScale(index);
   }
 
   public getDistances() {
@@ -90,16 +118,16 @@ class Model extends Subject {
     return this._dp.getDistancesOnScale();
   }
 
-  public getPointLocationOnScale(pointIndex: number): number {
-    return this._dp.getPointLocationOnScale(pointIndex);
+  public getPointLocationOnScale(index: number): number {
+    return this._dp.getPointLocationOnScale(index);
   }
 
   public getPointScale() {
     return this._dp.getPointScale();
   }
 
-  public getPointView(pointIndex: number): NonNullable<primitive> {
-    return this._dp.getPointView(pointIndex);
+  public getPointView(index: number): NonNullable<primitive> {
+    return this._dp.getPointView(index);
   }
 
   public getPointsView(): Array<NonNullable<primitive>> {
@@ -128,7 +156,11 @@ class Model extends Subject {
 
   public resetStateToInitial() {
     this._dp.resetCurrentStateToInitial();
-    const changes = { scope: 'all' };
+    this.notifyAll();
+  }
+
+  protected _notifyAboutPointChanges(index: number) {
+    const changes = { scope: 'point', index };
     this._notify(changes);
   }
 

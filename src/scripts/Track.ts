@@ -28,11 +28,11 @@ class Track {
     this._elem.prependTo(target);
   }
 
-  protected _getTemplate(trackClass: string = className.TRACK) {
-    trackClass += (this._orientation === HORIZONTAL)
+  protected _getTemplate(classes: string = className.TRACK) {
+    const modifiers = (this._orientation === HORIZONTAL)
       ? modifier.ORIENTATION_HORIZONTAL
       : modifier.ORIENTATION_VERTICAL;
-    return $('<div>').addClass(trackClass);
+    return $('<div>').addClass([classes, modifiers])
   }
 }
 

@@ -2,7 +2,7 @@ import Model from './Model';
 import View from './View';
 import Observer from './Observer';
 import Subject from './Subject';
-import { HandleState, ModelChanges, SliderState } from './Types';
+import { ModelChanges, PointState, ModelState } from './Types';
 
 class Presenter extends Observer {
   protected _model: Model | null;
@@ -27,7 +27,7 @@ class Presenter extends Observer {
     }
   }
 
-  public attachModel(model: Model): boolean {
+  public attachToModel(model: Model): boolean {
     if (this._model === null) {
       model.attach(this);
       this._model = model;
@@ -37,7 +37,7 @@ class Presenter extends Observer {
     return false;
   }
 
-  public detachModel(model: Model): boolean {
+  public detachFromModel(model: Model): boolean {
     if (this._model === model) {
       model.detach(this);
       this._model = null;
@@ -47,7 +47,7 @@ class Presenter extends Observer {
     return false;
   }
 
-  public attachView(view: View): boolean {
+  public attachToView(view: View): boolean {
     const isViewAlreadyAttached = this._views.indexOf(view) !== -1;
     if (isViewAlreadyAttached) {
       return false;
@@ -58,7 +58,7 @@ class Presenter extends Observer {
     return true;
   }
 
-  public detachView(view: View): void {
+  public detachFromView(view: View): void {
     const index = this._views.indexOf(view);
     const isViewAttached = index !== -1;
     if (isViewAttached) {
@@ -71,58 +71,33 @@ class Presenter extends Observer {
     if (changes.scope === 'point') {
       const index = changes.index;
       if (index !== undefined) {
+        const handleState = this._getPointState(model, index);
         this._views.forEach((view) => {
-          const handleState = this._getPointState(model, index);
-          this._updateHandle(view, index, handleState);
+          this._updateHandleState(view, index, handleState);
         });
       }
     } else {
+      const modelState = this._getModelState(model);
       this._views.forEach((view) => {
-        const modelState = this._getModelState(model);
-        this._updateSlider(view, modelState);
+        this._updateSliderState(view, modelState);
       });
     }
   }
 
-  protected _updateHandle(view: View, index: number, handleState: HandleState) {
-    view.setHandleState(index, handleState);
+  protected _updateHandleState(view: View, index: number, state: PointState) {
+    view.setHandlePosition(index, state);
   }
 
-  protected _updateSlider(view: View, sliderState: SliderState) {
-    view.setSliderState(sliderState);
+  protected _updateSliderState(view: View, state: ModelState) {
+    view.setSliderState(state);
   }
 
-  protected _getModelState(model: Model) {
-    return {
-      scale: model.getPointScale(),
-      values: model.getPointsView(),
-      distances: model.getDistancesOnScale(),
-      min: model.getMinBorderView(),
-      max: model.getMaxBorderView(),
-      step: model.getStep(),
-    };
+  protected _getModelState(model: Model): ModelState {
+    return model.getState();
   }
 
-  protected _getPointPosition(model: Model, index: number) {
-    const offset = model.getPointLocationOnScale(index);
-    const [leftIndent, rightIndent] = model.getDistanceToBordersOnScale(index);
-    return {
-      offset,
-      leftIndent,
-      rightIndent,
-    }
-  }
-
-  protected _getPointState(model: Model, index: number) {
-    const offset = model.getPointLocationOnScale(index);
-    const [leftIndent, rightIndent] = model.getDistanceToBordersOnScale(index);
-    const view = model.getPointView(index);
-    return {
-      offset,
-      leftIndent,
-      rightIndent,
-      view,
-    };
+  protected _getPointState(model: Model, index: number): PointState {
+    return model.getPointState(index);
   }
 
   protected _processViewUpdate(view: View, event: unknown) {}

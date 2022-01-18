@@ -1,4 +1,5 @@
-import { Configuration, direction, HandleState, orientation, SliderState } from './Types';
+import * as $ from 'jquery';
+import { Configuration, ModelState, PointState, orientation } from './Types';
 import Subject from './Subject';
 import Track from './Track';
 import Handle from './Handle';
@@ -46,24 +47,23 @@ class View extends Subject {
     return this._handles.length;
   }
 
-  public setSliderState(sliderState: SliderState) {
-    const { scale, distances, values, min, max, step } = sliderState;
+  public setSliderState(state: ModelState) {
+    const { points, min, max, step } = state;
+    this.setHandlePositions(points);
+    // TODO: values, min, max, step
   }
 
-  public setHandles(states: Array<HandleState>) {
-    states.forEach((state, id) => {
-      this.setHandleState(id, state);
+  public setHandlePositions(points: Array<PointState>) {
+    points.forEach((state, id) => {
+      this.setHandlePosition(id, state);
     });
   }
 
-  public setHandleState(id: number, state: HandleState) {
+  public setHandlePosition(id: number, state: PointState) {
     const { offset, leftIndent, rightIndent } = state;
-    const handle = this._handles[id];
-    const leftConnect = this._connects[id];
-    const rightConnect = this._connects[id + 1];
-    handle.move(offset);
-    leftConnect.resize(leftIndent);
-    rightConnect.moveAndResize(offset, rightIndent);
+    this._handles[id].move(offset);
+    this._connects[id].resize(leftIndent);
+    this._connects[id + 1].moveAndResize(offset, rightIndent);
   }
 
   public appendSliderTo(target: JQuery<HTMLElement>) {

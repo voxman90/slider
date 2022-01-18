@@ -37,7 +37,7 @@ class PercentageProcessor {
       return true;
     }
 
-    console.warn('A min or max is not valid.');
+    console.warn('A min or max is not valid');
     return false;
   }
 

@@ -67,9 +67,9 @@ class Handle {
   protected _transform(offset: number): void {
     if (this._orientation === HORIZONTAL) {
       this._elem.css('transform', `translate(${offset}%, 0px)`);
+    } else {
+      this._elem.css('transform', `translate(0px, ${offset}%)`);
     }
-
-    this._elem.css('transform', `translate(0px, ${offset}%)`);
   }
 }
 

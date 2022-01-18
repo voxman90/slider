@@ -69,10 +69,10 @@ class Connect {
   }
 
   protected _getTemplate(id: number, classes: string) {
-    classes += (this._orientation === HORIZONTAL)
+    const modifiers = (this._orientation === HORIZONTAL)
       ? modifier.ORIENTATION_HORIZONTAL
       : modifier.ORIENTATION_VERTICAL;
-    return $('<div>').addClass(classes)
+    return $('<div>').addClass([classes, modifiers])
       .attr('data-item', id)
       .css('transform', 'translate(0px, 0px) scale(0, 0)');
   }
@@ -80,9 +80,9 @@ class Connect {
   protected _transform(offset: number, size: number): void {
     if (this._orientation === HORIZONTAL) {
       this._elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 0)`);
+    } else {
+      this._elem.css('transform', `translate(0px, ${offset}%) scale(0, ${size}%)`);
     }
-
-    this._elem.css('transform', `translate(0px, ${offset}%) scale(0, ${size}%)`);
   }
 }
 
