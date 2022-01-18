@@ -71,7 +71,6 @@ abstract class DataProcessor {
       && this._isMatchRightBorder(this.minBorderIndex, minBorder)
     ) {
       this._setMinBorderUnsafe(minBorder);
-      this._pp.min = minBorder;
       this._pp.setBorders(minBorder, this.maxBorder);
       return true;
     }
@@ -193,7 +192,7 @@ abstract class DataProcessor {
   }
 
   public movePointInPercent(pointIndex: number, offsetInPercent: number): boolean {
-    const offset = this._scale.convertToValue(offsetInPercent);
+    const offset = this._pp.convertToValue(offsetInPercent);
     return this.movePoint(pointIndex, offset);
   }
 
