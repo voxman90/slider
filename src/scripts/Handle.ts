@@ -1,9 +1,12 @@
 import * as $ from 'jquery';
 import { HORIZONTAL } from './Constants';
 import { orientation } from './Types';
+import SliderElement from './SliderElement';
+
+const ELEM_NAME = 'handle';
 
 const className = {
-  HANDLE: 'slider__handle',
+  HANDLE: `slider__${ELEM_NAME}`,
 };
 
 const modifier = {
@@ -12,22 +15,23 @@ const modifier = {
   ORIENTATION_VERTICAL: `${className.HANDLE}_orientation_vertical`,
 };
 
-class Handle {
-  protected _id: number;
+class Handle extends SliderElement {
+  protected _index: number;
   protected _elem: JQuery<HTMLElement>;
   protected _orientation: orientation;
   protected _offset: number;
 
-  constructor(id: number = 0, orientation: orientation = HORIZONTAL, handleClass: string = className.HANDLE) {
-    this._id = id;
+  constructor(index: number = 0, orientation: orientation = HORIZONTAL, handleClass: string = className.HANDLE) {
+    super(ELEM_NAME);
+    this._index = index;
     this._orientation = orientation;
-    this._elem = this._getTemplate(id, handleClass);
+    this._elem = this._getTemplate(index, handleClass);
     this._offset = 0;
   }
 
-  public setId(id: number) {
-    this._id = id;
-    this._elem.attr('data-item', id);
+  public setIndex(index: number) {
+    this._index = index;
+    this._elem.attr('data-item', index);
   }
 
   public appendTo(target: JQuery<HTMLElement>) {
@@ -55,12 +59,12 @@ class Handle {
     this._elem.removeClass(modifier.ACTIVE);
   }
 
-  protected _getTemplate(id: number, classes: string) {
+  protected _getTemplate(index: number, classes: string) {
     const modifiers = (this._orientation === HORIZONTAL)
       ? modifier.ORIENTATION_HORIZONTAL
       : modifier.ORIENTATION_VERTICAL;
     return $('<div>').addClass([classes, modifiers])
-      .attr('data-item', id)
+      .attr('data-item', index)
       .css('transform', 'translate(0px, 0px)');
   }
 

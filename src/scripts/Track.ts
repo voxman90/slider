@@ -1,9 +1,12 @@
 import * as $ from 'jquery';
 import { HORIZONTAL } from './Constants';
 import { orientation } from './Types';
+import SliderElement from './SliderElement';
+
+const ELEM_NAME = 'track';
 
 const className = {
-  TRACK: 'slider__track',
+  TRACK: `slider__${ELEM_NAME}`,
 };
 
 const modifier = {
@@ -11,11 +14,12 @@ const modifier = {
   ORIENTATION_VERTICAL: `${className.TRACK}_orientation_vertical`,
 };
 
-class Track {
+class Track extends SliderElement {
   protected _elem: JQuery<HTMLElement>;
   protected _orientation: orientation;
 
   constructor(orientation: orientation = HORIZONTAL, trackClass: string = className.TRACK) {
+    super(ELEM_NAME);
     this._orientation = orientation;
     this._elem = this._getTemplate(trackClass);
   }

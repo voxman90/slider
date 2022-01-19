@@ -11,7 +11,7 @@ module.exports = {
   },
   plugins: [
     new CleanWebpackPlugin(),
-    new HTMLWebpackPlugin(),
+    new HTMLWebpackPlugin({ template: './src/index.html' }),
     new MiniCSSExtractPlugin(),
   ],
   module: {
@@ -43,8 +43,10 @@ module.exports = {
   },
   resolve: {
     modules: [
-      __path('src'),
+      __path('./src'),
+      'node_modules',
     ],
+    extensions: ['.ts', '.js', '.scss'],
   },
 };
 

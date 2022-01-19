@@ -1,9 +1,12 @@
 import * as $ from 'jquery';
 import { HORIZONTAL } from './Constants';
 import { orientation } from './Types';
+import SliderElement from './SliderElement';
+
+const ELEM_NAME = 'connect';
 
 const className = {
-  CONNECT: 'slider__connect',
+  CONNECT: `slider__${ELEM_NAME}`,
 };
 
 const modifier = {
@@ -12,24 +15,25 @@ const modifier = {
   ORIENTATION_VERTICAL: `${className.CONNECT}_orientation_vertical`,
 };
 
-class Connect {
-  protected _id: number;
+class Connect extends SliderElement {
+  protected _index: number;
   protected _elem: JQuery<HTMLElement>;
   protected _orientation: orientation;
   protected _offset: number;
   protected _size: number;
 
-  constructor(id: number = 0, orientation: orientation = HORIZONTAL, classes: string = className.CONNECT) {
-    this._id = id;
-    this._elem = this._getTemplate(id, classes);
+  constructor(index: number = 0, orientation: orientation = HORIZONTAL, classes: string = className.CONNECT) {
+    super(ELEM_NAME);
+    this._index = index;
     this._orientation = orientation;
+    this._elem = this._getTemplate(index, classes);
     this._offset = 0;
     this._size = 0;
   }
 
-  public setId(id: number) {
-    this._id = id;
-    this._elem.attr('data-item', id);
+  public setIndex(index: number) {
+    this._index = index;
+    this._elem.attr('data-item', index);
   }
 
   public appendTo(target: JQuery<HTMLElement>) {
@@ -68,20 +72,20 @@ class Connect {
     this._elem.removeClass(modifier.VISIBLE);
   }
 
-  protected _getTemplate(id: number, classes: string) {
+  protected _getTemplate(index: number, classes: string) {
     const modifiers = (this._orientation === HORIZONTAL)
       ? modifier.ORIENTATION_HORIZONTAL
       : modifier.ORIENTATION_VERTICAL;
     return $('<div>').addClass([classes, modifiers])
-      .attr('data-item', id)
-      .css('transform', 'translate(0px, 0px) scale(0, 0)');
+      .attr('data-item', index)
+      .css('transform', 'translate(0px, 0px) scale(1, 1)');
   }
 
   protected _transform(offset: number, size: number): void {
     if (this._orientation === HORIZONTAL) {
-      this._elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 0)`);
+      this._elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 1)`);
     } else {
-      this._elem.css('transform', `translate(0px, ${offset}%) scale(0, ${size}%)`);
+      this._elem.css('transform', `translate(0px, ${offset}%) scale(1, ${size}%)`);
     }
   }
 }
