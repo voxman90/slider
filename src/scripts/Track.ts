@@ -1,42 +1,18 @@
 import * as $ from 'jquery';
-import { HORIZONTAL } from './Constants';
-import { orientation } from './Types';
-import SliderElement from './SliderElement';
+import BEMElement from './BEMElement';
 
 const ELEM_NAME = 'track';
 
-const className = {
-  TRACK: `slider__${ELEM_NAME}`,
-};
+class Track extends BEMElement {
+  public $elem: JQuery<HTMLElement>;
 
-const modifier = {
-  ORIENTATION_HORIZONTAL: `${className.TRACK}_orientation_horizontal`,
-  ORIENTATION_VERTICAL: `${className.TRACK}_orientation_vertical`,
-};
-
-class Track extends SliderElement {
-  protected _elem: JQuery<HTMLElement>;
-  protected _orientation: orientation;
-
-  constructor(orientation: orientation = HORIZONTAL, trackClass: string = className.TRACK) {
-    super(ELEM_NAME);
-    this._orientation = orientation;
-    this._elem = this._getTemplate(trackClass);
+  constructor(blockName: string, blockNamespace: string) {
+    super(ELEM_NAME, blockName, blockNamespace);
+    this.$elem = this._getTemplate();
   }
 
-  public appendTo(target: JQuery<HTMLElement>): void {
-    this._elem.appendTo(target);
-  }
-
-  public prependTo(target: JQuery<HTMLElement>): void {
-    this._elem.prependTo(target);
-  }
-
-  protected _getTemplate(classes: string = className.TRACK) {
-    const modifiers = (this._orientation === HORIZONTAL)
-      ? modifier.ORIENTATION_HORIZONTAL
-      : modifier.ORIENTATION_VERTICAL;
-    return $('<div>').addClass([classes, modifiers])
+  protected _getTemplate(): JQuery<HTMLElement> {
+    return $('<div>').addClass(this.getElemClassName());
   }
 }
 

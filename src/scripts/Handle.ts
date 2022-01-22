@@ -1,79 +1,46 @@
 import * as $ from 'jquery';
-import { HORIZONTAL } from './Constants';
-import { orientation } from './Types';
-import SliderElement from './SliderElement';
+import BEMElement from './BEMElement';
 
 const ELEM_NAME = 'handle';
 
-const className = {
-  HANDLE: `slider__${ELEM_NAME}`,
-};
-
 const modifier = {
-  ACTIVE: `${className.HANDLE}_active`,
-  ORIENTATION_HORIZONTAL: `${className.HANDLE}_orientation_horizontal`,
-  ORIENTATION_VERTICAL: `${className.HANDLE}_orientation_vertical`,
+  ACTIVE: 'active',
 };
 
-class Handle extends SliderElement {
+class Handle extends BEMElement {
+  public $elem: JQuery<HTMLElement>;
   protected _index: number;
-  protected _elem: JQuery<HTMLElement>;
-  protected _orientation: orientation;
   protected _offset: number;
 
-  constructor(index: number = 0, orientation: orientation = HORIZONTAL, handleClass: string = className.HANDLE) {
-    super(ELEM_NAME);
+  constructor(blockName: string, blockNamespace: string, index: number = 0) {
+    super(ELEM_NAME, blockName, blockNamespace);
     this._index = index;
-    this._orientation = orientation;
-    this._elem = this._getTemplate(index, handleClass);
     this._offset = 0;
+    this.$elem = this._getTemplate();
   }
 
-  public setIndex(index: number) {
-    this._index = index;
-    this._elem.attr('data-item', index);
-  }
-
-  public appendTo(target: JQuery<HTMLElement>) {
-    this._elem.appendTo(target);
-  }
-
-  public prependTo(target: JQuery<HTMLElement>) {
-    this._elem.prependTo(target);
-  }
-
-  public remove() {
-    this._elem.remove();
-  }
-
-  public move(offset: number = 0): void {
+  public setOffsetAttr(offset: number = 0) {
     this._offset = offset;
-    this._transform(offset);
+    this.$elem.attr('data-offset', offset);
   }
 
-  public setActive() {
-    this._elem.addClass(modifier.ACTIVE);
+  public setIndexAttr(index: number = 0) {
+    this._index = index;
+    this.$elem.attr('data-item', index);
   }
 
-  public unsetActive() {
-    this._elem.removeClass(modifier.ACTIVE);
+  public setModifierActive() {
+    this.$elem.addClass(this.getElemModifier(modifier.ACTIVE));
   }
 
-  protected _getTemplate(index: number, classes: string) {
-    const modifiers = (this._orientation === HORIZONTAL)
-      ? modifier.ORIENTATION_HORIZONTAL
-      : modifier.ORIENTATION_VERTICAL;
-    return $('<div>').addClass([classes, modifiers])
-      .attr('data-item', index)
-      .css('transform', 'translate(0px, 0px)');
+  public unsetModifierActive() {
+    this.$elem.removeClass(this.getElemModifier(modifier.ACTIVE));
   }
 
-  protected _transform(offset: number): void {
-    if (this._orientation === HORIZONTAL) {
-      this._elem.css('transform', `translate(${offset}%, 0px)`);
-    } else {
-      this._elem.css('transform', `translate(0px, ${offset}%)`);
-    }
+  protected _getTemplate() {
+    return $('<div>').addClass(this.getElemClassName())
+      .attr('data-item', this._index)
+      .attr('data-offset', this._offset);
   }
 }
 

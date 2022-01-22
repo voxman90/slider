@@ -1,10 +1,19 @@
-import {orientation, direction } from './Types';
+import { orientation, direction } from './Types';
 
-export const VERTICAL: orientation = 0;
-export const HORIZONTAL: orientation = 1;
-export const RIGHT_DIRECTION: direction = 1;
-export const LEFT_DIRECTION: direction = -1;
-export const RTL = 1;
-export const LTR = -1;
+const VERTICAL: orientation = 0;
+const HORIZONTAL: orientation = 1;
+const RIGHT_DIRECTION: direction = 1;
+const LEFT_DIRECTION: direction = -1;
+const RTL = 1;
+const LTR = -1;
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyz';
 
-export const ALPHABET = 'abcdefghijklmnopqrstuvwxyz';
+export {
+  VERTICAL,
+  HORIZONTAL,
+  RIGHT_DIRECTION,
+  LEFT_DIRECTION,
+  RTL,
+  LTR,
+  ALPHABET,
+};

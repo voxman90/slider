@@ -1,91 +1,70 @@
 import * as $ from 'jquery';
 import { HORIZONTAL } from './Constants';
 import { orientation } from './Types';
-import SliderElement from './SliderElement';
+import BEMElement from './BEMElement';
 
 const ELEM_NAME = 'connect';
 
-const className = {
-  CONNECT: `slider__${ELEM_NAME}`,
-};
-
 const modifier = {
-  VISIBLE: `${className.CONNECT}_visible`,
-  ORIENTATION_HORIZONTAL: `${className.CONNECT}_orientation_horizontal`,
-  ORIENTATION_VERTICAL: `${className.CONNECT}_orientation_vertical`,
+  VISIBLE: 'visible',
+  ORIENTATION_HORIZONTAL: 'orientation_horizontal',
+  ORIENTATION_VERTICAL: 'orientation_vertical',
 };
 
-class Connect extends SliderElement {
+class Connect extends BEMElement {
+  public $elem: JQuery<HTMLElement>;
   protected _index: number;
-  protected _elem: JQuery<HTMLElement>;
-  protected _orientation: orientation;
   protected _offset: number;
   protected _size: number;
 
-  constructor(index: number = 0, orientation: orientation = HORIZONTAL, classes: string = className.CONNECT) {
-    super(ELEM_NAME);
+  constructor(blockName: string, blockNamespace: string, index: number = 0) {
+    super(ELEM_NAME, blockName, blockNamespace);
     this._index = index;
-    this._orientation = orientation;
-    this._elem = this._getTemplate(index, classes);
     this._offset = 0;
     this._size = 0;
+    this.$elem = this._getTemplate();
   }
 
-  public setIndex(index: number) {
+  public setIndexAttr(index: number = 0) {
     this._index = index;
-    this._elem.attr('data-item', index);
+    this.$elem.attr('data-item', index);
   }
 
-  public appendTo(target: JQuery<HTMLElement>) {
-    this._elem.appendTo(target);
-  }
-
-  public prependTo(target: JQuery<HTMLElement>) {
-    this._elem.prependTo(target);
-  }
-
-  public remove() {
-    this._elem.remove();
-  }
-
-  public move(offset: number = 0): void {
+  public move(offset: number = 0, orientation: orientation = HORIZONTAL): void {
     this._offset = offset;
-    this._transform(offset, this._size);
+    this._transform(offset, this._size, orientation);
   }
 
-  public resize(size: number = 0): void {
+  public resize(size: number = 0, orientation: orientation = HORIZONTAL): void {
     this._size = size;
-    this._transform(this._offset, size);
+    this._transform(this._offset, size, orientation);
   }
 
-  public moveAndResize(offset: number = 0, size: number = 0) {
+  public moveAndResize(offset: number = 0, size: number = 0, orientation: orientation = HORIZONTAL) {
     this._offset = offset;
     this._size = size;
-    this._transform(offset, size);
+    this._transform(offset, size, orientation);
   }
 
-  public makeVisible() {
-    this._elem.addClass(modifier.VISIBLE);
+  public setModifierVisible() {
+    this.$elem.addClass(this.getElemModifier(modifier.VISIBLE));
   }
 
-  public makeInvisible() {
-    this._elem.removeClass(modifier.VISIBLE);
+  public unsetModifierVisible() {
+    this.$elem.removeClass(this.getElemModifier(modifier.VISIBLE));
   }
 
-  protected _getTemplate(index: number, classes: string) {
-    const modifiers = (this._orientation === HORIZONTAL)
-      ? modifier.ORIENTATION_HORIZONTAL
-      : modifier.ORIENTATION_VERTICAL;
-    return $('<div>').addClass([classes, modifiers])
-      .attr('data-item', index)
+  protected _getTemplate() {
+    return $('<div>').addClass(this.getElemClassName())
+      .attr('data-item', this._index)
       .css('transform', 'translate(0px, 0px) scale(1, 1)');
   }
 
-  protected _transform(offset: number, size: number): void {
-    if (this._orientation === HORIZONTAL) {
-      this._elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 1)`);
+  protected _transform(offset: number, size: number, orientation: orientation): void {
+    if (orientation === HORIZONTAL) {
+      this.$elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 1)`);
     } else {
-      this._elem.css('transform', `translate(0px, ${offset}%) scale(1, ${size}%)`);
+      this.$elem.css('transform', `translate(0px, ${offset}%) scale(1, ${size}%)`);
     }
   }
 }
