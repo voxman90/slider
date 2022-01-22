@@ -1,3 +1,4 @@
+import * as $ from 'jquery';
 import BEMElement from "./BEMElement";
 import { HORIZONTAL } from "./Constants";
 import { orientation } from "./Types";
@@ -17,16 +18,16 @@ class Ground extends BEMElement {
   }
 
   private _getTemplate() {
-    return $('<div>').addClass(this.getElemClassName)
+    return $('<div>').addClass(this.getClassName())
       .css('transform', 'translate(0px, 0px)');
   }
 
-  private _transform(offset: number, orientation: orientation): void {
+  private _transform(offset: number, orientation: orientation) {
     if (orientation === HORIZONTAL) {
-      this.$elem.css('transform', `translate(${offset}%, 0px)`);
-    } else {
-      this.$elem.css('transform', `translate(0px, ${offset}%)`);
+      return this.$elem.css('transform', `translate(${offset}%, 0px)`);
     }
+
+    return this.$elem.css('transform', `translate(0px, ${offset}%)`);
   }
 }
 

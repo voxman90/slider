@@ -12,7 +12,7 @@ class Track extends BEMElement {
   }
 
   protected _getTemplate(): JQuery<HTMLElement> {
-    return $('<div>').addClass(this.getElemClassName());
+    return $('<div>').addClass(this.getClassName());
   }
 }
 

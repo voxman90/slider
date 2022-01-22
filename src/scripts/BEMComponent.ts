@@ -48,12 +48,20 @@ abstract class BEMComponent {
     target.off(uniqueEventName);
   }
 
-  public appendTo(target: JQuery<HTMLElement>) {
-    this.$elem.appendTo(target);
+  public appendTo(target: JQuery<HTMLElement> | BEMComponent) {
+    if (target instanceof BEMComponent) {
+      return this.$elem.appendTo(target.$elem);
+    }
+
+    return this.$elem.appendTo(target);
   }
 
-  public prependTo(target: JQuery<HTMLElement>) {
-    this.$elem.prependTo(target);
+  public prependTo(target: JQuery<HTMLElement> | BEMComponent) {
+    if (target instanceof BEMComponent) {
+      return this.$elem.appendTo(target.$elem);
+    }
+
+    return this.$elem.prependTo(target);
   }
 
   public remove() {

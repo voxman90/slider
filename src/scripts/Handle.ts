@@ -30,15 +30,15 @@ class Handle extends BEMElement {
   }
 
   public setModifierActive() {
-    this.$elem.addClass(this.getElemModifier(modifier.ACTIVE));
+    this.$elem.addClass(this.getModifier(modifier.ACTIVE));
   }
 
   public unsetModifierActive() {
-    this.$elem.removeClass(this.getElemModifier(modifier.ACTIVE));
+    this.$elem.removeClass(this.getModifier(modifier.ACTIVE));
   }
 
   protected _getTemplate() {
-    return $('<div>').addClass(this.getElemClassName())
+    return $('<div>').addClass(this.getClassName())
       .attr('data-item', this._index)
       .attr('data-offset', this._offset);
   }

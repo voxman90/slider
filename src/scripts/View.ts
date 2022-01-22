@@ -1,37 +1,22 @@
 import * as $ from 'jquery';
 import { Configuration, ModelState, PointState, orientation } from './Types';
 import Subject from './Subject';
-import Track from './Track';
-import Handle from './Handle';
-import Connect from './Connect';
 import { HORIZONTAL } from './Constants';
-
-const className = {
-  SLIDER: 'slider',
-  TRACK: 'slider__track',
-};
-
-// TODO: Move to Constants
-const defaultConfig = {
-  points: [0.5],
-};
+import Slider from './Slider';
 
 class View extends Subject {
-  protected _orientation: orientation;
-  protected _slider: JQuery<HTMLElement>;
-  protected _track?: Track;
-  protected _handles: Array<Handle>;
-  protected _connects: Array<Connect>;
+  protected _slider: Slider;
 
   constructor(config: Partial<Configuration>) {
     super();
-    this._slider = $('<div>');
-    this._connects = [];
-    this._handles = [];
-    this._orientation = HORIZONTAL;
-
+    const {
+      orientation = HORIZONTAL,
+      points = [],
+    } = config;
+    let numberOfHandles = points.length;
     try {
-      this._init(config);
+      this._isNumberOfHandlesValid(numberOfHandles);
+      this._slider = this._createSlider(numberOfHandles, orientation);
     } catch (err: unknown) {
       const isExpectedError = typeof err === 'string';
       if (!isExpectedError) {
@@ -39,47 +24,39 @@ class View extends Subject {
       }
 
       console.warn(`The config is not valid. Error: ${err}.\nThe default config will be applied.`);
-      this._init(defaultConfig);
+      numberOfHandles = 1;
+      this._slider = this._createSlider(numberOfHandles, orientation);
     }
   }
 
-  public get numberOfHandles() {
-    return this._handles.length;
-  }
-
   public setSliderState(state: ModelState) {
-    const { points, min, max, step } = state;
-    this.setHandlePositions(points);
-    // TODO: values, min, max, step
+    this._slider.setState(state);
   }
 
   public setHandlePositions(points: Array<PointState>) {
-    points.forEach((state, id) => {
-      this.setHandlePosition(id, state);
+    points.forEach((state, index) => {
+      this.setHandlePosition(index, state);
     });
   }
 
-  public setHandlePosition(id: number, state: PointState) {
-    const { offset, leftIndent, rightIndent } = state;
-    this._handles[id].move(offset);
-    this._connects[id].resize(leftIndent);
-    this._connects[id + 1].moveAndResize(offset, rightIndent);
+  public setHandlePosition(index: number, state: PointState) {
+    this._slider.setHandlePosition(index, state);
   }
 
   public appendSliderTo(target: JQuery<HTMLElement>) {
     this._slider.appendTo(target);
   }
 
-  protected _init(config: Partial<Configuration>) {
-    const {
-      orientation = HORIZONTAL,
-      points,
-    } = config;
+  public handleTrackClick(event: MouseEvent & { data: { notify: Function, base: HTMLElement }}): void {
+    const { data: { notify, base }} = event;
+    const x = event.clientX;
+    const y = event.clientY;
+    const rect = base.getBoundingClientRect();
+    notify({ target: 'track', event: 'click', data: { x, y, rect }});
+  }
 
-    const numberOfHandles = points && points.length;
-    this._isNumberOfHandlesValid(numberOfHandles);
-
-    this._slider = this._createSlider(numberOfHandles, orientation);
+  private _createSlider(numberOfHandles: number, orientation: orientation): Slider {
+    return new Slider({ numberOfHandles, orientation });
   }
 
   private _isNumberOfHandlesValid(numberOfHandles: number | undefined): asserts numberOfHandles is number {
@@ -90,48 +67,6 @@ class View extends Subject {
     if (numberOfHandles === 0) {
       throw 'number of handles is zero';
     }
-  }
-
-  protected _createSlider(numberOfHandles: number, orientation: orientation): JQuery<HTMLElement> {
-    const slider = $('<div>').addClass(className.SLIDER);
-    this._track = this._createTrack(orientation);
-    this._handles = this._createHandles(numberOfHandles, orientation);
-    this._connects = this._createConnects(numberOfHandles, orientation);
-    this._track.appendTo(slider);
-    this._handles.forEach((handle) => handle.appendTo(slider));
-    this._connects.forEach((connect) => connect.appendTo(slider));
-    return slider;
-  }
-
-  protected _createHandles(numberOfHandles: number, orientation: orientation, className?: string): Array<Handle> {
-    const handles = [];
-    for (let id = 0; id < numberOfHandles; id += 1) {
-      const handle = new Handle(id, orientation, className);
-      handles.push(handle);
-    }
-    return handles;
-  }
-
-  protected _createHandle(id: number, orientation: orientation, className?: string): Handle {
-    return new Handle(id, orientation, className);
-  }
-
-  protected _createConnects(numberOfHandles: number, orientation: orientation, className?: string): Array<Connect> {
-    const numberOfConnects = numberOfHandles + 1;
-    const connects = [];
-    for (let id = 0; id < numberOfConnects; id += 1) {
-      const connect = new Connect(id, orientation, className);
-      connects.push(connect);
-    }
-    return connects;
-  }
-
-  protected _createConnect(id: number, orientation: orientation, className?: string): Connect {
-    return new Connect(id, orientation, className);
-  }
-
-  protected _createTrack(orientation: orientation, className?: string) {
-    return new Track(orientation, className);
   }
 
   protected _notify(data?: object): void {

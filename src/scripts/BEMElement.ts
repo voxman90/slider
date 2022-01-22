@@ -10,12 +10,12 @@ abstract class BEMElement extends BEMComponent {
     this._blockNamespace = blockNamespace;
   }
 
-  public getElemClassName(): string {
+  public getClassName(): string {
     return `${this._blockName}__${this._name}`;
   }
 
-  public getElemModifier(modifier: string): string {
-    return `${this.getElemClassName()}_${modifier}`;
+  public getModifier(modifier: string): string {
+    return `${this.getClassName()}_${modifier}`;
   }
 
   public getNamespace(): string {

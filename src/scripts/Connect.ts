@@ -47,25 +47,25 @@ class Connect extends BEMElement {
   }
 
   public setModifierVisible() {
-    this.$elem.addClass(this.getElemModifier(modifier.VISIBLE));
+    this.$elem.addClass(this.getModifier(modifier.VISIBLE));
   }
 
   public unsetModifierVisible() {
-    this.$elem.removeClass(this.getElemModifier(modifier.VISIBLE));
+    this.$elem.removeClass(this.getModifier(modifier.VISIBLE));
   }
 
   protected _getTemplate() {
-    return $('<div>').addClass(this.getElemClassName())
+    return $('<div>').addClass(this.getClassName())
       .attr('data-item', this._index)
       .css('transform', 'translate(0px, 0px) scale(1, 1)');
   }
 
-  protected _transform(offset: number, size: number, orientation: orientation): void {
+  protected _transform(offset: number, size: number, orientation: orientation) {
     if (orientation === HORIZONTAL) {
-      this.$elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 1)`);
-    } else {
-      this.$elem.css('transform', `translate(0px, ${offset}%) scale(1, ${size}%)`);
+      return this.$elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 1)`);
     }
+
+    return this.$elem.css('transform', `translate(0px, ${offset}%) scale(1, ${size}%)`);
   }
 }
 
