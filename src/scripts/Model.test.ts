@@ -305,3 +305,110 @@ describe("Testing 'Model' for set type configuration:\n", () => {
     });
   });
 });
+
+describe("Testing methods for working with a grid:\n", () => {
+  describe("for range:\n", () => {
+    const config: Partial<Configuration> = {
+      type: 'range',
+      range: [0, 1],
+      step: 0.1,
+      points: [0],
+    };
+    const model = new Model(config);
+
+    it("if (density <= 0) then 'getPositionGrid' return []", () => {
+      const density = -0.1;
+      expect(model.getPositionGrid(density)).toStrictEqual([]);
+    });
+
+    it("if (density <= 0) then 'getPercentageGrid' return []", () => {
+      const density = -0.1;
+      expect(model.getPercentageGrid(density)).toStrictEqual([]);
+    });
+
+    it("if (density <= 0) then 'getValueGrid' return []", () => {
+      const density = -0.1;
+      expect(model.getValueGrid(density)).toStrictEqual([]);
+    });
+
+    it("Test the 'getValueGrid' and 'getPositionGrid' method", () => {
+      [
+        { density: 0.5, expectedGrid: [0, 0.5, 1] },
+        { density: 0.8, expectedGrid: [0, 0.8, 1] },
+        { density: 1 , expectedGrid: [0, 1] },
+      ].forEach(({ density, expectedGrid }) => {
+        expect(model.getPositionGrid(density)).toStrictEqual(expectedGrid);
+        expect(model.getValueGrid(density)).toStrictEqual(expectedGrid);
+      });
+    });
+
+    it("Test the 'getPercentageGrid' method", () => {
+      [
+        { density: 0.5, expectedGrid: [0, 50, 100] },
+        { density: 0.8, expectedGrid: [0, 80, 100] },
+        { density: 1, expectedGrid: [0, 100] },
+      ].forEach(({ density, expectedGrid }) => {
+        expect(model.getPercentageGrid(density)).toStrictEqual(expectedGrid);
+      });
+    });
+  });
+
+  describe("for set:\n", () => {
+    const config: Partial<Configuration> = {
+      type: 'set',
+      set: [...ALPHABET],
+      min: 0,
+      max: 25,
+      step: 1,
+      points: [0],
+    };
+    const model = new Model(config);
+
+    it("if (density <= 0) OR (density not integer) then 'getPositionGrid' return []", () => {
+      [-1, 0, 0.1].forEach((density) => {
+        expect(model.getPositionGrid(density)).toStrictEqual([]);
+      });
+    });
+
+    it("if (density <= 0) OR (density not integer) then 'getPercentageGrid' return []", () => {
+      [-1, 0, 0.1].forEach((density) => {
+        expect(model.getPercentageGrid(density)).toStrictEqual([]);
+      });
+    });
+
+    it("if (density <= 0) OR (density not integer) then 'getValueGrid' return []", () => {
+      [-1, 0, 0.1].forEach((density) => {
+        expect(model.getValueGrid(density)).toStrictEqual([]);
+      });
+    });
+
+    it("Test the 'getPositionGrid' method", () => {
+      [
+        { density: 1, expectedGrid: Array(26).fill(null).map((_, i) => i) },
+        { density: 10, expectedGrid: [0, 10, 20, 25] },
+        { density: 30, expectedGrid: [0, 25] },
+      ].forEach(({ density, expectedGrid }) => {
+        expect(model.getPositionGrid(density)).toStrictEqual(expectedGrid);
+      });
+    });
+
+    it("Test the 'getValueGrid' method", () => {
+      [
+        { density: 1,  expectedGrid: [...ALPHABET] },
+        { density: 10, expectedGrid: [ALPHABET[0], ALPHABET[10], ALPHABET[20], ALPHABET[25]] },
+        { density: 30, expectedGrid: [ALPHABET[0], ALPHABET[25]] },
+      ].forEach(({ density, expectedGrid }) => {
+        expect(model.getValueGrid(density)).toStrictEqual(expectedGrid);
+      });
+    });
+
+    it("Test the 'getPercentageGrid' method", () => {
+      [
+        { density: 13, expectedGrid: [0, 50, 100] },
+        { density: 30, expectedGrid: [0, 100] },
+      ].forEach(({ density, expectedGrid }) => {
+        expect(model.getPercentageGrid(density)).toStrictEqual(expectedGrid);
+      });
+    });
+  });
+});
