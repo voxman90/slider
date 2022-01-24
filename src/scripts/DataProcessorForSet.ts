@@ -69,15 +69,7 @@ class DataProcessorForSet extends DataProcessor {
   }
 
   public getPointView(pointIndex: number): NonNullable<primitive> {
-    const setItem = this._set[pointIndex];
-    if (
-      typeof setItem === 'object'
-      || typeof setItem === 'function'
-    ) {
-      return setItem.toString();
-    }
-
-    return setItem;
+    return this._getView(pointIndex);
   }
 
   public getPointsView(): Array<NonNullable<primitive>> {
@@ -94,6 +86,23 @@ class DataProcessorForSet extends DataProcessor {
 
   public getMaxBorderView(): NonNullable<primitive> {
     return this.getPointView(this.maxBorder);
+  }
+
+  public getValueSubset(density: number, from?: number, to?: number): Array<number> {
+    const step = (Number.isInteger(density)) ? density : this._mm.sub(this.maxBorder, this.minBorder);
+    return super.getValueSubset(step, from, to);
+  }
+
+  protected _getView(index: number): NonNullable<primitive> {
+    const item = this._set[index];
+    if (
+      typeof item === 'object'
+      || typeof item === 'function'
+    ) {
+      return item.toString();
+    }
+
+    return item;
   }
 
   protected _initConfig(config: Partial<Configuration>) {

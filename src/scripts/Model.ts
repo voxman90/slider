@@ -94,6 +94,18 @@ class Model extends Subject {
     };
   }
 
+  public getPositionGrid(density: number, from?: number, to?: number): Array<number> {
+    return this._dp.getValueSubset(density, from, to);
+  }
+
+  public getPercentageGrid(density: number, from?: number, to?: number): Array<number> {
+    return this._dp.getPercentageSubset(density, from, to);
+  }
+
+  public getValueGrid(density: number, from?: number, to?: number): Array<NonNullable<primitive>> {
+    return this._dp.getViewSubset(density, from, to);
+  }
+
   public getPointValue(index: number): number {
     return this._dp.getPointValue(index);
   }

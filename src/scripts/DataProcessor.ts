@@ -204,6 +204,30 @@ abstract class DataProcessor {
     this._currentState = [...this._initialState];
   }
 
+  public getValueSubset(density: number, from?: number, to?: number): Array<number> {
+    const firstSubsetValue = (from !== undefined) ? from : this.minBorder;
+    const lastSubsetValue = (to !== undefined) ? to : this.maxBorder;
+    const step = (density > 0) ? density : this._mm.sub(lastSubsetValue, firstSubsetValue);
+    const valueSubset = [];
+    let value = firstSubsetValue;
+    while (value < lastSubsetValue) {
+      valueSubset.push(value);
+      value = this._mm.add(value, step);
+    }
+    valueSubset.push(lastSubsetValue);
+    return valueSubset;
+  }
+
+  public getPercentageSubset(density: number, from?: number, to?: number): Array<number> {
+    return this.getValueSubset(density, from, to)
+      .map((val) => this._pp.convertToPercent(val));
+  }
+
+  public getViewSubset(density: number, from?: number, to?: number): Array<NonNullable<primitive>> {
+    return this.getValueSubset(density, from, to)
+      .map((val) => this._getView(val));
+  }
+
   public getStep(): number {
     return this._step;
   }
@@ -296,6 +320,10 @@ abstract class DataProcessor {
 
   protected _getPosition(positionIndex: number): number {
     return this._currentState[positionIndex];
+  }
+
+  protected _getView(val: number): NonNullable<primitive> {
+    return val;
   }
 
   protected _getTargetValue(pointIndex: number, numberOfSteps: number, direction: direction): number {

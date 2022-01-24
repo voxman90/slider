@@ -316,19 +316,19 @@ describe("Testing methods for working with a grid:\n", () => {
     };
     const model = new Model(config);
 
-    it("if (density <= 0) then 'getPositionGrid' return []", () => {
+    it("if (density <= 0) then 'getPositionGrid' return [minBorder, maxBorder]", () => {
       const density = -0.1;
-      expect(model.getPositionGrid(density)).toStrictEqual([]);
+      expect(model.getPositionGrid(density)).toStrictEqual([0, 1]);
     });
 
-    it("if (density <= 0) then 'getPercentageGrid' return []", () => {
+    it("if (density <= 0) then 'getPercentageGrid' return [minBorder, maxBorder]", () => {
       const density = -0.1;
-      expect(model.getPercentageGrid(density)).toStrictEqual([]);
+      expect(model.getPercentageGrid(density)).toStrictEqual([0, 100]);
     });
 
-    it("if (density <= 0) then 'getValueGrid' return []", () => {
+    it("if (density <= 0) then 'getValueGrid' return [minBorder, maxBorder]", () => {
       const density = -0.1;
-      expect(model.getValueGrid(density)).toStrictEqual([]);
+      expect(model.getValueGrid(density)).toStrictEqual([0, 1]);
     });
 
     it("Test the 'getValueGrid' and 'getPositionGrid' method", () => {
@@ -364,21 +364,21 @@ describe("Testing methods for working with a grid:\n", () => {
     };
     const model = new Model(config);
 
-    it("if (density <= 0) OR (density not integer) then 'getPositionGrid' return []", () => {
+    it("if (density <= 0) OR (density not integer) then 'getPositionGrid' return [minBorder, maxBorder]", () => {
       [-1, 0, 0.1].forEach((density) => {
-        expect(model.getPositionGrid(density)).toStrictEqual([]);
+        expect(model.getPositionGrid(density)).toStrictEqual([0, 25]);
       });
     });
 
-    it("if (density <= 0) OR (density not integer) then 'getPercentageGrid' return []", () => {
+    it("if (density <= 0) OR (density not integer) then 'getPercentageGrid' return [minBorder, maxBorder]", () => {
       [-1, 0, 0.1].forEach((density) => {
-        expect(model.getPercentageGrid(density)).toStrictEqual([]);
+        expect(model.getPercentageGrid(density)).toStrictEqual([0, 100]);
       });
     });
 
-    it("if (density <= 0) OR (density not integer) then 'getValueGrid' return []", () => {
+    it("if (density <= 0) OR (density not integer) then 'getValueGrid' return [minBorder, maxBorder]", () => {
       [-1, 0, 0.1].forEach((density) => {
-        expect(model.getValueGrid(density)).toStrictEqual([]);
+        expect(model.getValueGrid(density)).toStrictEqual(['a', 'z']);
       });
     });
 
@@ -404,7 +404,7 @@ describe("Testing methods for working with a grid:\n", () => {
 
     it("Test the 'getPercentageGrid' method", () => {
       [
-        { density: 13, expectedGrid: [0, 50, 100] },
+        { density: 12, expectedGrid: [0, 48, 96, 100] },
         { density: 30, expectedGrid: [0, 100] },
       ].forEach(({ density, expectedGrid }) => {
         expect(model.getPercentageGrid(density)).toStrictEqual(expectedGrid);
