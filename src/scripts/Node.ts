@@ -1,4 +1,4 @@
-import { FixedLengthArray } from './Types';
+import { FixedLengthArray } from 'common/types/Types';
 
 class Node<T> {
   public value: T | null;

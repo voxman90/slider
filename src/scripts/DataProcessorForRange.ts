@@ -1,4 +1,5 @@
-import { Configuration } from "./Types";
+import { Configuration } from "common/types/Types";
+
 import DataProcessor from './DataProcessor';
 
 const defaultConfig: Partial<Configuration> = {

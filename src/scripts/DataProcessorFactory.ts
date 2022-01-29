@@ -1,7 +1,8 @@
+import { Configuration } from "common/types/Types";
+
 import DataProcessor from "./DataProcessor";
 import DataProcessorForRange from "./DataProcessorForRange";
 import DataProcessorForSet from "./DataProcessorForSet";
-import { Configuration } from "./Types";
 
 function DataProcessorFactory(config: Partial<Configuration>): DataProcessor {
   const type = config.type;

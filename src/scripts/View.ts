@@ -1,8 +1,8 @@
-import * as $ from 'jquery';
-import { Configuration, ModelState, PointState, orientation } from './Types';
+import { HORIZONTAL } from 'common/constants/Constants';
+import { Configuration, ModelState, PointState, orientation } from 'common/types/Types';
+import Slider from 'components/Slider/Slider';
+
 import Subject from './Subject';
-import { HORIZONTAL } from './Constants';
-import Slider from './Slider';
 
 class View extends Subject {
   protected _slider: Slider;

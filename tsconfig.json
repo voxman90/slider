@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
+    "outDir": "dist",
     "strict": true,
     "noImplicitAny": true,
     "module": "es6",
@@ -8,5 +8,6 @@
     "allowJs": true,
     "moduleResolution": "node",
     "strictNullChecks": true,
-  }
+    "baseUrl": "./src",
+  },
 }

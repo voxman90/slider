@@ -1,7 +1,8 @@
+import { LEFT_DIRECTION, RIGHT_DIRECTION } from "common/constants/Constants";
+import { Configuration, direction, primitive } from "common/types/Types";
+
 import PercentageProcessor from "./PercentageProcessor";
 import MathModule from "./MathModule";
-import { Configuration, direction, primitive } from "./Types";
-import { LEFT_DIRECTION, RIGHT_DIRECTION } from './Constants';
 
 abstract class DataProcessor {
   protected _mm: MathModule;

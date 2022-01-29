@@ -1,4 +1,4 @@
-import { orientation, direction } from './Types';
+import { orientation, direction } from '../types/Types';
 
 const VERTICAL: orientation = 0;
 const HORIZONTAL: orientation = 1;

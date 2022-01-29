@@ -1,7 +1,8 @@
+import { Configuration, ModelState, PointState, primitive } from 'common/types/Types';
+
 import Subject from './Subject';
 import DataProcessor from './DataProcessor';
 import DataProcessorFactory from './DataProcessorFactory';
-import { Configuration, ModelState, PointState, primitive } from './Types';
 
 class Model extends Subject {
   private _dp: DataProcessor;

@@ -1,7 +1,8 @@
+import { ALPHABET } from 'common/constants/Constants';
+import { Configuration } from 'common/types/Types';
+
 import Model from './Model';
-import { Configuration } from './Types';
 import Observer from './Observer';
-import { ALPHABET } from './Constants';
 
 class ObserverMock extends Observer {
   update() {};

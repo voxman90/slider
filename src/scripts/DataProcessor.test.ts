@@ -1,7 +1,8 @@
+import { ALPHABET } from "common/constants/Constants";
+import { Configuration } from "common/types/Types";
+
 import DataProcessorFactory from "./DataProcessorFactory";
 import Generator from "./Generator";
-import { ALPHABET } from "./Constants";
-import { Configuration } from "./Types";
 
 const initDataProcessor = (config: Partial<Configuration>, extraConfigProperties: object = {}) => {
   return DataProcessorFactory(Object.assign(config, extraConfigProperties));

@@ -1,11 +1,11 @@
-import * as $ from 'jquery';
-import BEMBlock from './BEMBlock';
+import BEMBlock from 'components/BEMBlock';
+import { HORIZONTAL } from 'common/constants/Constants';
+import { orientation, PointState, ModelState } from 'common/types/Types';
+
 import Connect from './Connect';
 import Ground from './Ground';
 import Handle from './Handle';
 import Track from './Track';
-import { HORIZONTAL } from './Constants';
-import { orientation, ModelState, PointState } from './Types';
 
 const BLOCK_NAME = 'slider';
 
@@ -59,17 +59,17 @@ class Slider extends BEMBlock {
 
   public setHandlePosition(index: number, state: PointState) {
     const { offset, leftIndent, rightIndent } = state;
-    this.grounds[index].move(offset);
+    this.grounds[index].move(offset, this._orientation);
     this.handles[index].setOffsetAttr(offset);
-    this.connects[index].resize(leftIndent);
-    this.connects[index + 1].moveAndResize(offset, rightIndent);
+    this.connects[index].resize(leftIndent, this._orientation);
+    this.connects[index + 1].moveAndResize(offset, rightIndent, this._orientation);
   }
 
-  private _getTemplate(): JQuery<HTMLElement> {
+  protected _getTemplate(): JQuery<HTMLElement> {
     const orientation = (this._orientation === HORIZONTAL)
       ? this.getModifier(modifier.ORIENTATION_HORIZONTAL)
       : this.getModifier(modifier.ORIENTATION_VERTICAL);
-    return $('<div>').addClass([this.getClassName(), orientation]);
+    return super._getTemplate(orientation);
   }
 
   private _connectSliderElements(): void {
@@ -82,11 +82,11 @@ class Slider extends BEMBlock {
   }
 
   private _createTrack() {
-    return new Track(this._name, this.namespace);
+    return new Track(this);
   }
 
   private _createGround(): Ground {
-    return new Ground(this._name, this.namespace);
+    return new Ground(this);
   }
 
   private _createGrounds(numberOfHandles: number): Array<Ground> {
@@ -99,7 +99,7 @@ class Slider extends BEMBlock {
   }
 
   private _createHandle(index: number): Handle {
-    return new Handle(this._name, this.namespace, index);
+    return new Handle(this, index);
   }
 
   private _createHandles(numberOfHandles: number): Array<Handle> {
@@ -112,7 +112,7 @@ class Slider extends BEMBlock {
   }
 
   protected _createConnect(index: number): Connect {
-    return new Connect(this._name, this.namespace, index);
+    return new Connect(this, index);
   }
 
   protected _createConnects(numberOfHandles: number): Array<Connect> {

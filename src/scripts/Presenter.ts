@@ -1,8 +1,9 @@
+import { ModelChanges, PointState, ModelState } from 'common/types/Types';
+
 import Model from './Model';
 import View from './View';
 import Observer from './Observer';
 import Subject from './Subject';
-import { ModelChanges, PointState, ModelState } from './Types';
 
 class Presenter extends Observer {
   protected _model: Model | null;

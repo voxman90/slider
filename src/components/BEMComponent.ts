@@ -1,6 +1,7 @@
 import * as $ from 'jquery';
-import Generator from './Generator';
-import { ALPHABET } from './Constants';
+
+import Generator from 'scripts/Generator';
+import { ALPHABET } from 'common/constants/Constants';
 
 const ID_LENGTH = 16;
 
@@ -13,14 +14,16 @@ type EventListenerParameters = {
 
 abstract class BEMComponent {
   public abstract $elem: JQuery<HTMLElement>;
-  protected _name: string;
+  public name: string;
   protected _id: string;
-  protected namespace: string;
 
   constructor (name: string = '') {
-    this._name = name;
+    this.name = name;
     this._id = this._createId();
-    this.namespace = this.getNamespace();
+  }
+
+  public get namespace(): string {
+    return `${this.name}#${this._id}`;
   }
 
   public attachEventListeners(listeners: Array<EventListenerParameters>): void {
@@ -68,9 +71,7 @@ abstract class BEMComponent {
     this.$elem.remove();
   }
 
-  public getNamespace(): string {
-    return `${this._name}#${this._id}`;
-  }
+  protected abstract get className(): string;
 
   protected _getUniqueEventName(event: string): string {
     return `${event}.${this.namespace}`;
@@ -82,6 +83,14 @@ abstract class BEMComponent {
       id += Generator.getRandomChar(ALPHABET);
     }
     return id;
+  }
+
+  protected _getTemplate(classes: string | string[] = [], tag: string = '<div>'): JQuery<HTMLElement> {
+    if (classes instanceof Array) {
+      return $(tag).addClass([this.className, ...classes]);
+    }
+
+    return $(tag).addClass([this.className, classes]);
   }
 }
 

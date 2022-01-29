@@ -6,7 +6,7 @@ const path = require('path');
 module.exports = {
   entry: "index.js",
   output: {
-    path: __path('dist'),
+    path: path.resolve('dist'),
     filename: '[name].js',
   },
   plugins: [
@@ -43,13 +43,9 @@ module.exports = {
   },
   resolve: {
     modules: [
-      __path('./src'),
+      path.resolve('./src'),
       'node_modules',
     ],
     extensions: ['.ts', '.js', '.scss'],
   },
 };
-
-function __path(p) {
-  return path.join(__dirname, p);
-}

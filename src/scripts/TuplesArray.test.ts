@@ -1,5 +1,6 @@
+import { NonBottomValue } from "common/types/Types";
+
 import { createTuplesArray, removeTuplesWithDuplicateKeys } from "./TuplesArray";
-import { NonBottomValue } from "./Types";
 
 type Tuple = [string, NonBottomValue];
 

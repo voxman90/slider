@@ -1,5 +1,6 @@
-import { Configuration, NonBottomValue, primitive } from './Types';
-import { ALPHABET } from './Constants';
+import { ALPHABET } from 'common/constants/Constants';
+import { Configuration, NonBottomValue, primitive } from 'common/types/Types';
+
 import DataProcessor from './DataProcessor';
 
 const defaultConfig: Partial<Configuration> = {

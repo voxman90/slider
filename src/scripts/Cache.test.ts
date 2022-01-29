@@ -1,6 +1,7 @@
+import { NonBottomValue } from 'common/types/Types';
+
 import Cache from './Cache';
 import { createTuplesArray } from './TuplesArray';
-import { NonBottomValue } from './Types';
 
 type Tuple = [string, NonBottomValue];
 type TuplesArray = Array<Tuple>;

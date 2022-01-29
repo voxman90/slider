@@ -1,5 +1,6 @@
-import { Configuration } from './Types';
-import { ALPHABET } from './Constants';
+import { ALPHABET } from 'common/constants/Constants';
+import { Configuration } from 'common/types/Types';
+
 import Generator from './Generator';
 import DataProcessorForSet from './DataProcessorForSet';
 

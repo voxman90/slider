@@ -1,7 +1,8 @@
-import * as $ from 'jquery';
-import { HORIZONTAL } from './Constants';
-import { orientation } from './Types';
-import BEMElement from './BEMElement';
+import BEMElement from 'components/BEMElement';
+import { HORIZONTAL } from 'common/constants/Constants';
+import { orientation } from 'common/types/Types';
+
+import Slider from './Slider';
 
 const ELEM_NAME = 'connect';
 
@@ -13,12 +14,12 @@ const modifier = {
 
 class Connect extends BEMElement {
   public $elem: JQuery<HTMLElement>;
-  protected _index: number;
-  protected _offset: number;
-  protected _size: number;
+  private _index: number;
+  private _offset: number;
+  private _size: number;
 
-  constructor(blockName: string, blockNamespace: string, index: number = 0) {
-    super(ELEM_NAME, blockName, blockNamespace);
+  constructor(block: Slider, index: number = 0) {
+    super(ELEM_NAME, block);
     this._index = index;
     this._offset = 0;
     this._size = 0;
@@ -55,7 +56,7 @@ class Connect extends BEMElement {
   }
 
   protected _getTemplate() {
-    return $('<div>').addClass(this.getClassName())
+    return super._getTemplate()
       .attr('data-item', this._index)
       .css('transform', 'translate(0px, 0px) scale(1, 1)');
   }

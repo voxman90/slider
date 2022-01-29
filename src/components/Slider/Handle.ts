@@ -1,5 +1,6 @@
-import * as $ from 'jquery';
-import BEMElement from './BEMElement';
+import BEMElement from 'components/BEMElement';
+
+import Slider from "./Slider";
 
 const ELEM_NAME = 'handle';
 
@@ -9,11 +10,11 @@ const modifier = {
 
 class Handle extends BEMElement {
   public $elem: JQuery<HTMLElement>;
-  protected _index: number;
-  protected _offset: number;
+  private _index: number;
+  private _offset: number;
 
-  constructor(blockName: string, blockNamespace: string, index: number = 0) {
-    super(ELEM_NAME, blockName, blockNamespace);
+  constructor(block: Slider, index: number = 0) {
+    super(ELEM_NAME, block);
     this._index = index;
     this._offset = 0;
     this.$elem = this._getTemplate();
@@ -38,7 +39,7 @@ class Handle extends BEMElement {
   }
 
   protected _getTemplate() {
-    return $('<div>').addClass(this.getClassName())
+    return super._getTemplate()
       .attr('data-item', this._index)
       .attr('data-offset', this._offset);
   }

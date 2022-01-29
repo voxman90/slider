@@ -1,15 +1,16 @@
-import * as $ from 'jquery';
-import BEMElement from "./BEMElement";
-import { HORIZONTAL } from "./Constants";
-import { orientation } from "./Types";
+import BEMElement from 'components/BEMElement';
+import { HORIZONTAL } from 'common/constants/Constants';
+import { orientation } from 'common/types/Types';
+
+import Slider from "./Slider";
 
 const ELEM_NAME = 'ground';
 
 class Ground extends BEMElement {
   public $elem: JQuery<HTMLElement>;
 
-  constructor (blockName: string, blockNamespace: string) {
-    super(ELEM_NAME, blockName, blockNamespace);
+  constructor (block: Slider) {
+    super(ELEM_NAME, block);
     this.$elem = this._getTemplate();
   }
 
@@ -17,8 +18,8 @@ class Ground extends BEMElement {
     this._transform(offset, orientation);
   }
 
-  private _getTemplate() {
-    return $('<div>').addClass(this.getClassName())
+  protected _getTemplate() {
+    return super._getTemplate()
       .css('transform', 'translate(0px, 0px)');
   }
 
