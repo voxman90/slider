@@ -15,6 +15,8 @@ export type FixedLengthArray<T extends Array<NonUndefined>> =
   Pick<T, Exclude<keyof T, ArrayLengthMutationKeys>>
   & { [Symbol.iterator]: () => IterableIterator<NonUndefined> };
 
+export type EventWithData<Data> = JQuery.TriggeredEvent<EventTarget, Data, EventTarget, EventTarget>;
+
 export interface Configuration {
   type: 'range' | 'set';
   step: number;
@@ -32,6 +34,11 @@ export interface Configuration {
   isCached: boolean;
   cacheCapacity: number;
   prettifier: (x: string) => string;
+}
+
+export interface ViewChanges<T> {
+  type: Array<string>;
+  event: JQuery.TriggeredEvent<EventTarget, T, EventTarget, EventTarget>;
 }
 
 export interface ModelChanges {

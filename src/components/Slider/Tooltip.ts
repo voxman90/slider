@@ -1,10 +1,9 @@
-import BEMElement from 'components/BEMElement';
-import { HORIZONTAL } from 'common/constants/Constants';
-import { orientation } from 'common/types/Types';
+import BEMElement from "components/BEMElement";
+import { HORIZONTAL } from "common/constants/Constants";
+import { orientation } from "common/types/Types";
 
-import Slider from './Slider';
-
-const ELEM_NAME = 'tooltip';
+import Slider from "./Slider";
+import { elemName } from "./Constants";
 
 const modifier = {
   VISIBLE: 'visible',
@@ -19,7 +18,7 @@ class Tooltip extends BEMElement {
   private _size: number;
 
   constructor(block: Slider, index: number = 0) {
-    super(ELEM_NAME, block);
+    super(elemName.TOOLTIP, block);
     this._index = index;
     this.$elem = this._getTemplate();
     this._offset = 0;

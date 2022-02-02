@@ -7,9 +7,8 @@ import Ground from "./Ground";
 import Handle from "./Handle";
 import Track from "./Track";
 import Base from "./Base";
+import { BLOCK_NAME } from "./Constants";
 import "./Slider.scss";
-
-const BLOCK_NAME = 'slider';
 
 const modifier = {
   ORIENTATION_HORIZONTAL: 'orientation_horizontal',

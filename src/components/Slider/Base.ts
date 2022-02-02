@@ -1,14 +1,13 @@
-import BEMElement from 'components/BEMElement';
+import BEMElement from "components/BEMElement";
 
-import Slider from './Slider';
-
-const ELEM_NAME = 'base';
+import Slider from "./Slider";
+import { elemName } from "./Constants";
 
 class Base extends BEMElement {
   public $elem: JQuery<HTMLElement>;
 
   constructor(block: Slider) {
-    super(ELEM_NAME, block);
+    super(elemName.BASE, block);
     this.$elem = this._getTemplate();
   }
 }

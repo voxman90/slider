@@ -1,9 +1,15 @@
-import { ModelChanges, PointState, ModelState } from 'common/types/Types';
+import { ModelChanges, PointState, ModelState, EventWithData, ViewChanges } from 'common/types/Types';
 
 import Model from './Model';
 import View from './View';
 import Observer from './Observer';
 import Subject from './Subject';
+
+interface viewHandlerMatrix {
+  [EventTarget: string]: {
+    [EventType: string]: <T>(view: View, event: EventWithData<T>) => void;
+  }
+}
 
 class Presenter extends Observer {
   protected _model: Model | null;
@@ -15,16 +21,16 @@ class Presenter extends Observer {
     this._views = [];
   }
 
-  public update(subject: Subject, data: object = {}): void {
+  public update<T>(subject: Subject, data: ModelChanges | ViewChanges<T>): void {
     if (
       this._isModel(subject)
       && this._model === subject
     ) {
-      this._processModelUpdate(subject, data);
+      this._processModelUpdate(subject, data as ModelChanges);
     }
 
     if (this._isView(subject)) {
-      this._processViewUpdate(subject, data);
+      this._processViewUpdate(subject, data as ViewChanges<T>);
     }
   }
 
@@ -68,7 +74,7 @@ class Presenter extends Observer {
     view.detach(this);
   }
 
-  protected _processModelUpdate(model: Model, changes: Partial<ModelChanges>) {
+  protected _processModelUpdate(model: Model, changes: ModelChanges) {
     if (changes.scope === 'point') {
       const index = changes.index;
       if (index !== undefined) {
@@ -101,8 +107,40 @@ class Presenter extends Observer {
     return model.getPointState(index);
   }
 
-  protected _processViewUpdate(view: View, event: unknown) {
-    console.log(view, event);
+  protected _processViewUpdate<T>(view: View, data: ViewChanges<T>): void {
+    const viewHandlerMatrix: viewHandlerMatrix = {
+      'base': {
+        'click': this._processViewBaseClickEvent,
+      },
+      'handle': {
+        'mousedown': this._processViewHandleMousedownEvent,
+      },
+      'window': {
+        'mousemove': this._processViewWindowMousemoveEvent,
+        'mouseup': this._processViewWindowMouseupEvent,
+      },
+    };
+    const {
+      type: [eventTarget, eventType],
+      event,
+    } = data;
+    viewHandlerMatrix[eventTarget][eventType]?.call(this, view, event);
+  }
+
+  protected _processViewBaseClickEvent(view: View, event: EventWithData<any>): void {
+    console.log(event)
+  }
+
+  protected _processViewHandleMousedownEvent(view: View, event: EventWithData<any>): void {
+    console.log(event)
+  }
+
+  protected _processViewWindowMousemoveEvent(view: View, event: EventWithData<any>): void {
+    console.log(event)
+  }
+
+  protected _processViewWindowMouseupEvent(view: View, event: EventWithData<any>): void {
+    console.log(event)
   }
 
   protected _isModel(subject: Subject): subject is Model {

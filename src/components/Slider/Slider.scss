@@ -65,6 +65,7 @@ $handle-hor-left-offset: calc(-1 * $handle-size-with-border / 2);
   z-index: 5;
   width: 100%;
   height: 100%;
+  pointer-events: none;
 }
 
 .slider__handle {
@@ -75,6 +76,7 @@ $handle-hor-left-offset: calc(-1 * $handle-size-with-border / 2);
   border: $handle-border-size solid #FFFFFF;
   border-radius: 50%;
   background: linear-gradient(180deg, $secondary 0%, $secondary-gradient 100%);
+  pointer-events: all;
 
   .slider_orientation_horizontal & {
     top: $handle-hor-top-offset;

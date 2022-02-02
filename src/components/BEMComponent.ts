@@ -5,11 +5,11 @@ import { ALPHABET } from 'common/constants/Constants';
 
 const ID_LENGTH = 16;
 
-type EventListenerParameters = {
-  $target: JQuery<HTMLElement>,
+type EventListenerParameters<T> = {
+  $target: JQuery<EventTarget>,
   eventName: string,
-  data: Object,
-  handler: (event: JQuery.Event) => void,
+  data: T,
+  handler: (event: JQuery.TriggeredEvent<EventTarget, T, EventTarget, EventTarget>) => void,
 };
 
 abstract class BEMComponent {
@@ -26,29 +26,25 @@ abstract class BEMComponent {
     return `${this.name}#${this._id}`;
   }
 
-  public attachEventListeners(listeners: Array<EventListenerParameters>): void {
-    listeners.forEach((listener) => this.attachEventListener(listener));
-  }
-
-  public attachEventListener(listenerParam: EventListenerParameters): void {
+  public attachEventListener<T>(listenerParam: EventListenerParameters<T>): void {
     const {
       $target,
       eventName,
       handler,
-      data = null,
+      data,
     } = listenerParam;
 
     const uniqueEventName = this._getUniqueEventName(eventName);
     $target.on(uniqueEventName, data, (event) => handler(event));
   }
 
-  public removeEventListeners(events: Array<{ eventName: string, target: JQuery<HTMLElement> }>): void {
-    events.forEach(({ target, eventName }) => this.removeEventListener(target, eventName));
+  public removeEventListeners(events: Array<{ eventName: string, $target: JQuery<HTMLElement> }>): void {
+    events.forEach(({ $target, eventName }) => this.removeEventListener($target, eventName));
   }
 
-  public removeEventListener(target: JQuery<HTMLElement>, eventName: string): void {
+  public removeEventListener($target: JQuery<HTMLElement>, eventName: string): void {
     const uniqueEventName = this._getUniqueEventName(eventName);
-    target.off(uniqueEventName);
+    $target.off(uniqueEventName);
   }
 
   public appendTo(target: JQuery<HTMLElement> | BEMComponent) {

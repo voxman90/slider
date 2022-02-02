@@ -1,16 +1,15 @@
-import BEMElement from 'components/BEMElement';
-import { HORIZONTAL } from 'common/constants/Constants';
-import { orientation } from 'common/types/Types';
+import BEMElement from "components/BEMElement";
+import { HORIZONTAL } from "common/constants/Constants";
+import { orientation } from "common/types/Types";
 
 import Slider from "./Slider";
-
-const ELEM_NAME = 'ground';
+import { elemName } from "./Constants";
 
 class Ground extends BEMElement {
   public $elem: JQuery<HTMLElement>;
 
   constructor (block: Slider) {
-    super(ELEM_NAME, block);
+    super(elemName.GROUND, block);
     this.$elem = this._getTemplate();
   }
 

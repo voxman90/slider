@@ -1,8 +1,7 @@
-import BEMElement from 'components/BEMElement';
+import BEMElement from "components/BEMElement";
 
 import Slider from "./Slider";
-
-const ELEM_NAME = 'handle';
+import { elemName } from "./Constants";
 
 const modifier = {
   ACTIVE: 'active',
@@ -15,7 +14,7 @@ class Handle extends BEMElement {
   public zIndex: number;
 
   constructor(block: Slider, index: number = 0, zIndex: number = 0) {
-    super(ELEM_NAME, block);
+    super(elemName.HANDLE, block);
     this.index = index;
     this.zIndex = zIndex;
     this.offset = 0;

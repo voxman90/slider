@@ -12,6 +12,14 @@ abstract class BEMBlock extends BEMComponent {
   public getModifier(modifier: string): string {
     return `${this.className}_${modifier}`;
   }
+
+  public getElementClassName(elemName: string): string {
+    return `${this.className}__${elemName}`;
+  }
+
+  public getElementModifier(elemName: string, modifier: string): string {
+    return `${this.getElementClassName(elemName)}_${modifier}`;
+  }
 }
 
 export default BEMBlock;

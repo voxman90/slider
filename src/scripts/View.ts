@@ -1,8 +1,11 @@
-import { HORIZONTAL } from 'common/constants/Constants';
-import { Configuration, ModelState, PointState, orientation } from 'common/types/Types';
-import Slider from 'components/Slider/Slider';
+import * as $ from "jquery";
 
-import Subject from './Subject';
+import { HORIZONTAL } from "common/constants/Constants";
+import { Configuration, ModelState, PointState, orientation, EventWithData } from "common/types/Types";
+import Slider from "components/Slider/Slider";
+
+import Subject from "./Subject";
+import { elemName as sliderElemName } from "components/Slider/Constants";
 
 class View extends Subject {
   public slider: Slider;
@@ -58,15 +61,89 @@ class View extends Subject {
         view: this,
       },
     });
+
+    this.slider.handles.forEach((handle, index) => {
+      handle.attachEventListener({
+        $target: handle.$elem,
+        eventName: 'mousedown',
+        handler: this.handleHandleMousedown,
+        data: {
+          view: this,
+          index,
+        },
+      });
+    });
+
+    this.slider.attachEventListener({
+      $target: $(document),
+      eventName: 'mousemove',
+      handler: this.handleDocumentMousemove,
+      data: {
+        view: this,
+      },
+    });
+
+    this.slider.attachEventListener({
+      $target: $(document),
+      eventName: 'mouseup',
+      handler: this.handleDocumentMouseup,
+      data: {
+        view: this,
+      },
+    });
   }
 
-  public handleBaseClick(event: MouseEvent & { data: { view: View }}): void {
+  public handleHandleMousedown(event: EventWithData<{ view: View }>): void {
+    const { data: { view }} = event;
+    view.notify({
+      type: ['handle', 'mousedown'],
+      event,
+    });
+  }
+
+  public handleDocumentMousemove(event: EventWithData<{ view: View }>): void {
+    const { data: { view }} = event;
+    const activeHandleIndex = view.slider.activeHandleIndex;
+    if (activeHandleIndex !== null) {
+      view.notify({
+        type: ['slider', 'mousemove'],
+        event,
+      });
+    }
+  }
+
+  public handleDocumentMouseup(event: EventWithData<{ view: View }>): void {
+    const { data: { view }} = event;
+    const activeHandleIndex = view.slider.activeHandleIndex;
+    if (activeHandleIndex !== null) {
+      view.notify({
+        type: ['slider', 'mouseup'],
+        event,
+      });
+    }
+  }
+
+  public handleBaseClick(event: EventWithData<{ view: View }>): void {
     const {
-      offsetX,
-      offsetY,
+      target,
       data: { view },
     } = event;
-    view.notify({ event });
+    const baseClassName = view.slider.getElementClassName(sliderElemName.BASE);
+    const trackClassName = view.slider.getElementClassName(sliderElemName.TRACK);
+    const connectClassName = view.slider.getElementClassName(sliderElemName.CONNECT);
+    if (
+      target instanceof HTMLElement
+      && (
+        $(target).hasClass(baseClassName)
+        || $(target).hasClass(trackClassName)
+        || $(target).hasClass(connectClassName)
+      )
+    ) {
+      view.notify({
+        type: ['base', 'click'],
+        event,
+      });
+    }
   }
 
   private _createSlider(numberOfHandles: number, orientation: orientation): Slider {
