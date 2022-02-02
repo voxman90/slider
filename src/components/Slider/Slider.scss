@@ -1,0 +1,88 @@
+@import '../../styles/_colors.scss';
+
+$base-size: 6px;
+$base-border-size: 1px;
+$base-border-radius: calc($base-size / 2);
+$connect-size: calc($base-size + 2 * $base-border-size);
+$handle-size: 16px;
+$handle-border-size: 2px;
+$handle-size-with-border: calc($handle-size + 2 * $handle-border-size);
+$handle-hor-top-offset: calc(-1 * ($handle-size-with-border - $connect-size) / 2);
+$handle-hor-left-offset: calc(-1 * $handle-size-with-border / 2);
+
+.slider {
+  position: relative;
+}
+
+.slider__base {
+  position: relative;
+  border: $base-border-size solid transparent;
+  border-radius: $base-border-radius;
+
+  .slider_orientation_horizontal & {
+    width: 100%;
+    height: $base-size;
+  }
+
+  .slider_orientation_vertical & {
+    width: $base-size;
+    height: 100%;
+  }
+}
+
+.slider__track {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: -0.5px;
+  left: -0.5px;
+  border: $base-border-size solid $dark-shade-25;
+  border-radius: $base-border-radius;
+  background: #FFFFFF;
+  overflow: hidden;
+}
+
+.slider__connect {
+  position: absolute;
+  background: linear-gradient(180deg, $secondary 0%, $secondary-gradient 100%);
+  transform-origin: left top;
+
+  .slider_orientation_horizontal & {
+    width: 100%;
+    height: $connect-size;
+    top: -$base-border-size;
+  }
+
+  .slider_orientation_vertical & {
+    width: $connect-size;
+    height: 100%;
+    left: -$base-border-size;
+  }
+}
+
+.slider__ground {
+  position: absolute;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+}
+
+.slider__handle {
+  position: absolute;
+  box-sizing: content-box;
+  height: $handle-size;
+  width: $handle-size;
+  border: $handle-border-size solid #FFFFFF;
+  border-radius: 50%;
+  background: linear-gradient(180deg, $secondary 0%, $secondary-gradient 100%);
+
+  .slider_orientation_horizontal & {
+    top: $handle-hor-top-offset;
+    left: $handle-hor-left-offset;
+  }
+
+  .slider_orientation_vertical & {
+    top: $handle-hor-left-offset;
+    left: $handle-hor-top-offset;
+  }
+}

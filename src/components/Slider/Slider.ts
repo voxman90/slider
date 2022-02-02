@@ -1,11 +1,13 @@
-import BEMBlock from 'components/BEMBlock';
-import { HORIZONTAL } from 'common/constants/Constants';
-import { orientation, PointState, ModelState } from 'common/types/Types';
+import BEMBlock from "components/BEMBlock";
+import { HORIZONTAL } from "common/constants/Constants";
+import { orientation, PointState, ModelState } from "common/types/Types";
 
-import Connect from './Connect';
-import Ground from './Ground';
-import Handle from './Handle';
-import Track from './Track';
+import Connect from "./Connect";
+import Ground from "./Ground";
+import Handle from "./Handle";
+import Track from "./Track";
+import Base from "./Base";
+import "./Slider.scss";
 
 const BLOCK_NAME = 'slider';
 
@@ -16,10 +18,12 @@ const modifier = {
 
 class Slider extends BEMBlock {
   public $elem: JQuery<HTMLElement>;
+  public base: Base;
   public track: Track;
   public connects: Array<Connect>;
   public grounds: Array<Ground>;
   public handles: Array<Handle>;
+  public activeHandleIndex: number | null;
   protected _orientation: orientation;
 
   constructor (config: any) {
@@ -28,8 +32,10 @@ class Slider extends BEMBlock {
       orientation = HORIZONTAL,
       numberOfHandles = 1,
     } = config;
+    this.activeHandleIndex = null;
     this._orientation = orientation;
     this.$elem = this._getTemplate();
+    this.base = this._createBase();
     this.track = this._createTrack();
     this.connects = this._createConnects(numberOfHandles);
     this.grounds = this._createGrounds(numberOfHandles);
@@ -51,10 +57,35 @@ class Slider extends BEMBlock {
     // TODO: values, min, max, step
   }
 
+  public setInitialHandlesLayout() {
+    this.handles.forEach((handle, index) => {
+      handle.setZIndex(index);
+    });
+  }
+
+  public setHandleZIndex(index: number, zIndex: number): void {
+    const handle = this.handles[index];
+    handle.setZIndex(zIndex);
+  }
+
   public setHandlePositions(points: Array<PointState>) {
     points.forEach((state, id) => {
       this.setHandlePosition(id, state);
     });
+  }
+
+  public setHandleActive(index: number): void {
+    this.setHandleInactive();
+    this.activeHandleIndex = index;
+    this.handles[index].setModifierActive();
+  }
+
+  public setHandleInactive(): void {
+    if (this.activeHandleIndex !== null) {
+      const activeHandle = this.handles[this.activeHandleIndex];
+      activeHandle.unsetModifierActive();
+      this.activeHandleIndex = null;
+    }
   }
 
   public setHandlePosition(index: number, state: PointState) {
@@ -73,12 +104,17 @@ class Slider extends BEMBlock {
   }
 
   private _connectSliderElements(): void {
-    this.track.appendTo(this);
-    this.connects.forEach((connect) => connect.appendTo(this));
+    this.base.appendTo(this);
+    this.track.appendTo(this.base);
+    this.connects.forEach((connect) => connect.appendTo(this.track));
     this.grounds.forEach((ground, i) => {
       this.handles[i].appendTo(ground);
-      ground.appendTo(this);
+      ground.appendTo(this.base);
     });
+  }
+
+  private _createBase() {
+    return new Base(this);
   }
 
   private _createTrack() {
@@ -106,6 +142,7 @@ class Slider extends BEMBlock {
     const handles = [];
     for (let index = 0; index < numberOfHandles; index += 1) {
       const handle = this._createHandle(index);
+      handle.setZIndex(index);
       handles.push(handle);
     }
     return handles;

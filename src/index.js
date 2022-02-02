@@ -1,10 +1,12 @@
 import * as $ from 'jquery';
+
+import { HORIZONTAL } from 'common/constants/Constants';
+
 import Model from './scripts/Model';
 import View from './scripts/View';
 import Presenter from './scripts/Presenter';
-import { HORIZONTAL } from './scripts/Constants';
 
-import './styles/slider.scss';
+import './styles/styles.scss';
 
 const config = {
   type: 'range',

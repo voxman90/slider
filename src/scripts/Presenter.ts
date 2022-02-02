@@ -101,7 +101,9 @@ class Presenter extends Observer {
     return model.getPointState(index);
   }
 
-  protected _processViewUpdate(view: View, event: unknown) {}
+  protected _processViewUpdate(view: View, event: unknown) {
+    console.log(view, event);
+  }
 
   protected _isModel(subject: Subject): subject is Model {
     return subject instanceof Model;

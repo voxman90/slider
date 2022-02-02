@@ -13,13 +13,13 @@ class Model extends Subject {
   }
 
   public notifyAll(): void {
-    this._notify({ scope: 'all' });
+    this.notify({ scope: 'all' });
   }
 
   public setPointValue(index: number, val: number): boolean {
     const isValueSet = this._dp.setPoint(index, val);
     if (isValueSet) {
-      this._notifyAboutPointChanges(index);
+      this.notifyAboutPointChanges(index);
       return true;
     }
 
@@ -172,12 +172,12 @@ class Model extends Subject {
     this.notifyAll();
   }
 
-  protected _notifyAboutPointChanges(index: number) {
+  public notifyAboutPointChanges(index: number) {
     const changes = { scope: 'point', index };
-    this._notify(changes);
+    this.notify(changes);
   }
 
-  protected _notify(changes: object) {
+  public notify(changes: object) {
     this._observers.forEach((observer) => {
       observer.update(this, changes);
     });

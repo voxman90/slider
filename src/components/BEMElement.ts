@@ -2,19 +2,19 @@ import BEMBlock from './BEMBlock';
 import BEMComponent from './BEMComponent';
 
 abstract class BEMElement extends BEMComponent {
-  protected _block: BEMBlock;
+  public block: BEMBlock;
 
   constructor(name: string, block: BEMBlock) {
     super(name);
-    this._block = block;
+    this.block = block;
   }
 
   public get className(): string {
-    return `${this._block.name}__${this.name}`;
+    return `${this.block.name}__${this.name}`;
   }
 
   public get namespace(): string {
-    return `${this._block.namespace}.${super.namespace}`;
+    return `${this.block.namespace}.${super.namespace}`;
   }
 
   public getModifier(modifier: string): string {

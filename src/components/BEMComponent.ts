@@ -73,6 +73,10 @@ abstract class BEMComponent {
 
   protected abstract get className(): string;
 
+  protected _setModifier(modifier: string | string[]) {
+    this.$elem.addClass(modifier);
+  }
+
   protected _getUniqueEventName(event: string): string {
     return `${event}.${this.namespace}`;
   }

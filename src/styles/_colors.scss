@@ -1,0 +1,13 @@
+@function dark-shade($alpha) {
+  @return rgba($dark-shade, $alpha);
+}
+
+$dark-shade: #1F2041;
+$secondary: #6FCF97;
+$secondary-gradient: #66D2EA;
+
+$dark-shade-05: dark-shade(0.05);
+$dark-shade-25: dark-shade(0.25);
+$dark-shade-50: dark-shade(0.50);
+$dark-shade-75: dark-shade(0.75);
+$dark-shade-100: dark-shade(1);
