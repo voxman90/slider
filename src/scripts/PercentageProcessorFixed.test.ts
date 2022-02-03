@@ -1,7 +1,7 @@
 import Generator from './Generator';
-import PercentageProcessor from './PercentageProcessor';
+import PercentageProcessorFixed from './PercentageProcessorFixed';
 
-const scale = new PercentageProcessor(0, 1);
+const scale = new PercentageProcessorFixed();
 
 test("This method should reflect the value on the scale", () => {
   const x = Generator.getRandomInt(0, 1e+10);

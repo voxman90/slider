@@ -4,6 +4,8 @@ import Model from './Model';
 import View from './View';
 import Observer from './Observer';
 import Subject from './Subject';
+import PercentageProcessor from './PercentageProcessor';
+import MathModule from './MathModule';
 
 interface viewHandlerMatrix {
   [EventTarget: string]: {
@@ -12,16 +14,20 @@ interface viewHandlerMatrix {
 }
 
 class Presenter extends Observer {
-  protected _model: Model | null;
+  protected _model: Model;
   protected _views: Array<View>;
+  protected _mm: MathModule;
+  protected _pp: PercentageProcessor;
 
-  constructor() {
+  constructor(model: Model) {
     super();
-    this._model = null;
+    this._mm = new MathModule();
+    this._pp = new PercentageProcessor(this._mm);
+    this._model = model;
     this._views = [];
   }
 
-  public update<T>(subject: Subject, data: ModelChanges | ViewChanges<T>): void {
+  public update(subject: Subject, data: ModelChanges | ViewChanges<any>): void {
     if (
       this._isModel(subject)
       && this._model === subject
@@ -30,28 +36,14 @@ class Presenter extends Observer {
     }
 
     if (this._isView(subject)) {
-      this._processViewUpdate(subject, data as ViewChanges<T>);
+      this._processViewUpdate(subject, data as ViewChanges<any>);
     }
   }
 
-  public attachToModel(model: Model): boolean {
-    if (this._model === null) {
-      model.attach(this);
-      this._model = model;
-      return true;
-    }
-
-    return false;
-  }
-
-  public detachFromModel(model: Model): boolean {
-    if (this._model === model) {
-      model.detach(this);
-      this._model = null;
-      return true;
-    }
-
-    return false;
+  public attachToModel(model: Model): void {
+    this._model.detach(this);
+    model.attach(this);
+    this._model = model;
   }
 
   public attachToView(view: View): boolean {
@@ -110,14 +102,14 @@ class Presenter extends Observer {
   protected _processViewUpdate<T>(view: View, data: ViewChanges<T>): void {
     const viewHandlerMatrix: viewHandlerMatrix = {
       'base': {
-        'click': this._processViewBaseClickEvent,
+        'click': this._processViewSliderBaseClick,
       },
       'handle': {
-        'mousedown': this._processViewHandleMousedownEvent,
+        'mousedown': this._processViewSliderHandleMousedown,
       },
       'window': {
-        'mousemove': this._processViewWindowMousemoveEvent,
-        'mouseup': this._processViewWindowMouseupEvent,
+        'mousemove': this._processViewSliderWindowMousemove,
+        'mouseup': this._processViewSliderWindowMouseup,
       },
     };
     const {
@@ -127,19 +119,55 @@ class Presenter extends Observer {
     viewHandlerMatrix[eventTarget][eventType]?.call(this, view, event);
   }
 
-  protected _processViewBaseClickEvent(view: View, event: EventWithData<any>): void {
+  protected _getSliderBaseRelativePosition(view: View, event: EventWithData<any>): any {
+    const $base = view.slider.base.$elem;
+    const baseRect = this._getBoundClientRect($base);
+    if (baseRect === null) {
+      return null;
+    }
+
+    const { x: basePageX, y: basePageY } = baseRect;
+    const { pageX, pageY } = event;
+    console.log($base.offset(), baseRect, pageX, pageY)
+  }
+
+  private _getRelativeCoordinatesPercentage(baseWidth: number, baseHeight: number, left: number, top: number) {
+    this._pp.reflectOnScale
+    return {
+      offsetX: 1,
+      offsetY: 1,
+    };
+  }
+
+  private _getRelativePointCoordinates(pointClientX: number, pointClientY: number, basePageX: number, basePageY: number) {
+    return {
+      left: this._mm.sub(pointClientX, basePageX),
+      top: this._mm.sub(pointClientY, basePageY),
+    };
+  }
+
+  protected _getBoundClientRect($elem: JQuery<HTMLElement>): DOMRect | null {
+    const elem = $elem.get(0);
+    if (elem === undefined) {
+      return null;
+    }
+
+    return elem.getBoundingClientRect();
+  }
+
+  protected _processViewSliderBaseClick<T>(view: View, event: EventWithData<T>): void {
+    this._getSliderBaseRelativePosition(view, event)
+  }
+
+  protected _processViewSliderHandleMousedown<T>(view: View, event: EventWithData<T>): void {
     console.log(event)
   }
 
-  protected _processViewHandleMousedownEvent(view: View, event: EventWithData<any>): void {
+  protected _processViewSliderWindowMousemove<T>(view: View, event: EventWithData<T>): void {
     console.log(event)
   }
 
-  protected _processViewWindowMousemoveEvent(view: View, event: EventWithData<any>): void {
-    console.log(event)
-  }
-
-  protected _processViewWindowMouseupEvent(view: View, event: EventWithData<any>): void {
+  protected _processViewSliderWindowMouseup<T>(view: View, event: EventWithData<T>): void {
     console.log(event)
   }
 

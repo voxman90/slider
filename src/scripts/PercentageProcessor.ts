@@ -1,83 +1,46 @@
+import Cache from "scripts/Cache";
+
 import MathModule from "./MathModule";
 
-const defaultConf = {
-  MIN: 0,
-  MAX: 100,
-  RATIO: 1,
-};
+const ratioCacheCapacity = 256;
 
 class PercentageProcessor {
-  private _mm: MathModule;
-  private _min: number;
-  private _max: number;
-  private _ratio: number;
+  protected _mm: MathModule;
+  protected _cacheForRatio: Cache<[number, number], number>;
 
-  constructor(min?: number, max?: number, mm?: MathModule) {
-    this._min = defaultConf.MIN;
-    this._max = defaultConf.MAX;
-    this._ratio = defaultConf.RATIO;
+  constructor(mm?: MathModule) {
     this._mm = mm || new MathModule();
-
-    this.setBorders(min, max);
+    this._cacheForRatio = new Cache(ratioCacheCapacity);
   }
 
-  public setMinBorder(min?: number): boolean {
-    return this.setBorders(min, this._max);
+  public convertToPercent(val: number, min: number, max: number): number {
+    const ratio = this.calculateRatio(min, max);
+    return this._mm.div(val, ratio);
   }
 
-  public setMaxBorder(max?: number): boolean {
-    return this.setBorders(this._min, max);
+  public convertToValue(percent: number, min: number, max: number): number {
+    const ratio = this.calculateRatio(min, max);
+    return this._mm.mul(percent, ratio);
   }
 
-  public setBorders(min: number = defaultConf.MIN, max: number = defaultConf.MAX): boolean {
-    if (this._areBordersValid(min, max)) {
-      this._min = min;
-      this._max = max;
-      this._ratio = this._calculateRatio();
-      return true;
+  public reflectOnScale(val: number, min: number, max: number): number {
+    return this.convertOffsetToPercent(min, val, min, max);
+  }
+
+  public convertOffsetToPercent(oldValue: number, newValue: number, min: number, max: number): number {
+    const offset = this._mm.sub(newValue, oldValue);
+    return this.convertToPercent(offset, min, max);
+  }
+
+  public calculateRatio(min: number, max: number): number {
+    let ratio = this._cacheForRatio.get([min, max]);
+    if (ratio === null) {
+      const rangeLength = this._mm.sub(max, min);
+      ratio = this._mm.div(rangeLength, 100);
+      this._cacheForRatio.set([min, max], ratio);
     }
 
-    console.warn('A min or max is not valid');
-    return false;
-  }
-
-  public convertToPercent(val: number): number {
-    return this._mm.div(val, this._ratio);
-  }
-
-  public convertToValue(percent: number): number {
-    return this._mm.mul(percent, this._ratio);
-  }
-
-  public shift(val: number, offsetInPercent: number) {
-    const offset = this.convertToValue(offsetInPercent);
-    return this._mm.add(val, offset);
-  }
-
-  public reflectOnScale(val: number): number {
-    return this.convertOffsetToPercent(this._min, val);
-  }
-
-  public convertOffsetToPercent(referenceVal: number, val: number): number {
-    const offset = this._mm.sub(val, referenceVal);
-    return this.convertToPercent(offset);
-  }
-
-  protected _calculateRatio(): number {
-    const rangeLength = this._mm.sub(this._max, this._min);
-    return this._mm.div(rangeLength, 100);
-  }
-
-  protected _areBordersValid(min: number, max: number): boolean {
-    if (
-      Number.isFinite(min)
-      && Number.isFinite(max)
-      && min < max
-    ) {
-      return true;
-    }
-
-    return false;
+    return ratio;
   }
 }
 

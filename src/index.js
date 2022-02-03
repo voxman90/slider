@@ -15,8 +15,8 @@ const config = {
   points: [2, 6, 8],
   connects: [false, true, false, true],
 };
-const presenter = new Presenter(config);
 const model = new Model(config);
+const presenter = new Presenter(model);
 const view = new View(config);
 presenter.attachToModel(model);
 presenter.attachToView(view);

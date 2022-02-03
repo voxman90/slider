@@ -1,22 +1,22 @@
 import Node from './Node';
 import Queue from './Queue';
 
-class Cache<T> {
+class Cache<K, V> {
   private _capacity: number;
-  private _map: Map<string, T>;
-  private _queue: Queue<string>;
+  private _map: Map<K, V>;
+  private _queue: Queue<K>;
 
   constructor (capacity: number = 0) {
     this._capacity = capacity;
     this._queue = new Queue();
-    this._map = new Map();
+    this._map = new Map<K, V>();
   }
 
   get size() {
     return this._queue.length;
   }
 
-  public set(key: string, value: T): Cache<T> {
+  public set(key: K, value: V): Cache<K, V> {
     const isValueCached = this.has(key);
     if (isValueCached) {
       return this;
@@ -32,11 +32,11 @@ class Cache<T> {
     return this;
   }
 
-  public get(key: string): T | null {
+  public get(key: K): V | null {
     return this._map.get(key) || null;
   }
 
-  public has(key: string): boolean {
+  public has(key: K): boolean {
     return this._map.has(key);
   }
 
@@ -63,12 +63,12 @@ class Cache<T> {
     return true;
   }
 
-  private _enqueue(key: string): void {
+  private _enqueue(key: K): void {
     const node = new Node(key);
     this._queue.enqueue(node);
   }
 
-  private _dequeue(): string | null {
+  private _dequeue(): K | null {
     const firstNode = this._queue.dequeue();
     return firstNode?.value || null;
   }

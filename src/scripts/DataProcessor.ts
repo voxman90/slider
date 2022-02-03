@@ -1,12 +1,12 @@
 import { LEFT_DIRECTION, RIGHT_DIRECTION } from "common/constants/Constants";
 import { Configuration, direction, primitive } from "common/types/Types";
 
-import PercentageProcessor from "./PercentageProcessor";
+import PercentageProcessorFixed from "./PercentageProcessorFixed";
 import MathModule from "./MathModule";
 
 abstract class DataProcessor {
   protected _mm: MathModule;
-  protected _pp: PercentageProcessor;
+  protected _pp: PercentageProcessorFixed;
   protected _initialState: Array<number>;
   protected _currentState: Array<number>;
   protected _step: number;
@@ -14,7 +14,7 @@ abstract class DataProcessor {
 
   constructor(mm?: MathModule) {
     this._mm = mm || new MathModule();
-    this._pp = new PercentageProcessor(0, 100, this._mm);
+    this._pp = new PercentageProcessorFixed({ mm: this._mm, min: 0, max: 100 });
     this._initialState = [0, 0, 100];
     this._currentState = [0, 0, 100];
     this._step = 1;
