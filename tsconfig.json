@@ -2,12 +2,13 @@
   "compilerOptions": {
     "outDir": "dist",
     "strict": true,
-    "noImplicitAny": true,
     "module": "es6",
     "target": "es6",
     "allowJs": true,
     "moduleResolution": "node",
     "strictNullChecks": true,
+    "strictBindCallApply": true,
+    "noImplicitAny": true,
     "baseUrl": "./src",
   },
 }

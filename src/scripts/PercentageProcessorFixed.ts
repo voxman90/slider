@@ -12,7 +12,7 @@ class PercentageProcessorFixed extends PercentageProcessor {
   private _max: number;
   private _ratio: number;
 
-  constructor (config: Partial<{ mm: MathModule, min: number, max: number }> = {}) {
+  constructor (config: { mm: MathModule, min?: number, max?: number }) {
     const {
       mm,
       min,
@@ -22,21 +22,21 @@ class PercentageProcessorFixed extends PercentageProcessor {
     this._min = defaultConfig.MIN;
     this._max = defaultConfig.MAX;
     this._ratio = defaultConfig.RATIO;
-    this.setBorders(min, max);
+    this.setBoundaries(min, max);
   }
 
-  public setMinBorder(min: number): boolean {
-    return this.setBorders(min, this._max);
+  public setMinBoundary(min: number): boolean {
+    return this.setBoundaries(min, this._max);
   }
 
-  public setMaxBorder(max: number): boolean {
-    return this.setBorders(this._min, max);
+  public setMaxBoundary(max: number): boolean {
+    return this.setBoundaries(this._min, max);
   }
 
-  public setBorders(min: number = defaultConfig.MIN, max: number = defaultConfig.MAX): boolean {
-    if (this._areBordersValid(min, max)) {
-      this._min = min;
-      this._max = max;
+  public setBoundaries(min?: number, max?: number): boolean {
+    const boundaries = [min, max];
+    if (this._areBoundariesValid(boundaries)) {
+      [this._min, this._max] = boundaries;
       this._ratio = this._calculateRatio();
       return true;
     }
@@ -71,16 +71,21 @@ class PercentageProcessorFixed extends PercentageProcessor {
     return super.calculateRatio(this._min, this._max);
   }
 
-  private _areBordersValid(min: number, max: number): boolean {
+  private _areBoundariesValid(boundaries: unknown[]): boundaries is number[] {
+    const [min, max] = boundaries;
     if (
-      Number.isFinite(min)
-      && Number.isFinite(max)
+      this._isFinite(min)
+      && this._isFinite(max)
       && min < max
     ) {
       return true;
     }
 
     return false;
+  }
+
+  private _isFinite(val: unknown): val is number {
+    return Number.isFinite(val);
   }
 }
 

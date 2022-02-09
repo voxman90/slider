@@ -87,4 +87,8 @@ $handle-hor-left-offset: calc(-1 * $handle-size-with-border / 2);
     top: $handle-hor-left-offset;
     left: $handle-hor-top-offset;
   }
+
+  &_active {
+    background: gray;
+  }
 }

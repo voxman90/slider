@@ -1,26 +1,26 @@
 import { ALPHABET } from "common/constants/Constants";
-import { Configuration } from "common/types/Types";
+import { Config } from "common/types/Types";
 
 import DataProcessorFactory from "./DataProcessorFactory";
 import Generator from "./Generator";
 
-const initDataProcessor = (config: Partial<Configuration>, extraConfigProperties: object = {}) => {
+const initDataProcessor = (config: Partial<Config>, extraConfigProperties: object = {}) => {
   return DataProcessorFactory(Object.assign(config, extraConfigProperties));
 }
 
 describe("Testing set type configuration:\n", () => {
-  const config: Partial<Configuration> = {
+  const config: Partial<Config> = {
     type: 'set',
     set: [...ALPHABET],
   };
 
   describe("Testing the 'setPoint' method:\n", () => {
-    const points = [5, 10, 15, 20];
-    const dp = initDataProcessor(config, { points });
+    const values = [5, 10, 15, 20];
+    const dp = initDataProcessor(config, { values });
 
     it("should return false for inappropriate index", () => {
-      expect(dp.setPoint(4, 20)).toBeFalsy();
-      expect(dp.setPoint(-1, 5)).toBeFalsy();
+      expect(dp.setPointValue(4, 20)).toBeFalsy();
+      expect(dp.setPointValue(-1, 5)).toBeFalsy();
     });
 
     it("should return true for appropriate index", () => {

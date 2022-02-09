@@ -1,93 +1,121 @@
 import { LEFT_DIRECTION, RIGHT_DIRECTION } from "common/constants/Constants";
-import { Configuration, direction, primitive } from "common/types/Types";
+import { Config, direction, Point, Interval, primitive } from "common/types/Types";
 
 import PercentageProcessorFixed from "./PercentageProcessorFixed";
 import MathModule from "./MathModule";
 
-abstract class DataProcessor {
+abstract class DataProcessor<K extends keyof Config> {
   protected _mm: MathModule;
   protected _pp: PercentageProcessorFixed;
-  protected _initialState: Array<number>;
-  protected _currentState: Array<number>;
+  protected _minBoundary: Point;
+  protected _maxBoundary: Point;
+  protected _points: Array<Point>;
+  protected _intervals: Array<Interval>;
   protected _step: number;
-  protected abstract _initConfig(config: Partial<Configuration>): void;
+  protected abstract _isValidConfig(config: Partial<Config>): asserts config is Pick<Config, K>;
+  protected abstract _setState(config: Pick<Config, K>): void;
 
   constructor(mm?: MathModule) {
     this._mm = mm || new MathModule();
-    this._pp = new PercentageProcessorFixed({ mm: this._mm, min: 0, max: 100 });
-    this._initialState = [0, 0, 100];
-    this._currentState = [0, 0, 100];
+    this._pp = new PercentageProcessorFixed({ mm: this._mm });
+    this._minBoundary = this.createPoint(0, 0);
+    this._maxBoundary = this.createPoint(1, 100);
+    this._points = [];
+    this._intervals = [];
     this._step = 1;
   }
 
-  public get minBorder(): number {
-    return this._getPosition(this.minBorderIndex);
+  public get min(): number {
+    return this._minBoundary.value;
   }
 
-  public get maxBorder(): number {
-    return this._getPosition(this.maxBorderIndex);
+  public get max(): number {
+    return this._maxBoundary.value;
   }
 
-  public get range(): [minBorder: number, maxBorder: number] {
-    return [this.minBorder, this.maxBorder];
-  }
-
-  public get firstPositionIndex(): number {
-    return 0;
-  }
-
-  public get lastPositionIndex(): number {
-    return this._currentState.length - 1;
-  }
-
-  public get numberOfPositions(): number {
-    return this.lastPositionIndex - this.firstPositionIndex + 1;
-  }
-
-  public get firstPointIndex(): number {
-    return 1;
-  }
-
-  public get lastPointIndex(): number {
-    return this._currentState.length - 2;
+  public get length(): number {
+    return this._mm.sub(this.max, this.min);
   }
 
   public get numberOfPoints(): number {
-    return this.lastPointIndex - this.firstPointIndex + 1;
+    return this._points.length;
   }
 
-  public get minBorderIndex(): number {
+  public get firstPointIndex(): number {
     return 0;
   }
 
-  public get maxBorderIndex(): number {
-    return this._currentState.length - 1;
+  public get lastPointIndex(): number {
+    return this._points.length - 1;
   }
 
-  public setMinBorder(minBorder: number): boolean {
-    const maxStepSize = this.maxBorder - minBorder;
+  public createIntervals(points: Array<Point>): Array<Interval> {
+    const intervals: Array<Interval> = [];
+    this._forEachPair(points, (from, to) => {
+      intervals.push(this.createInterval(from, to));
+    });
+    return intervals;
+  }
+
+  public createInterval(from: Point, to: Point): Interval {
+    const value = this._getDistanceBetweenPoints(from, to);
+    const percent = this._pp.convertToPercent(value);
+    return {
+      from,
+      to,
+      value,
+      percent,
+    };
+  }
+
+  public createPoints(values: Array<number>): Array<Point> {
+    const points: Array<Point> = [];
+    values.forEach((value) => {
+      points.push(this.createPoint(value));
+    });
+    return points;
+  }
+
+  public createPoint(value: number, percent?: number): Point {
+    return {
+      value,
+      percent: (percent === undefined) ? this._pp.reflectOnScale(value) : percent,
+      view: this.getView(value),
+    };
+  }
+
+  public setMinBoundary(min: number): boolean {
+    const maxStepSize = this._mm.sub(this.max, min);
+    const firstPointValue = this._getPoint(0).value;
+    const isMatchRightBoundary = this._mm.sub(firstPointValue, min) > 0;
     if (
-      minBorder < this.maxBorder
+      min < this.max
       && this._step <= maxStepSize
-      && this._isMatchRightBorder(this.minBorderIndex, minBorder)
+      && isMatchRightBoundary
     ) {
-      this._setMinBorderUnsafe(minBorder);
-      this._pp.setBorders(minBorder, this.maxBorder);
+      this._setMinBoundaryUnsafe(min);
+      this._pp.setBoundaries(min, this.max);
       return true;
     }
 
     return false;
   }
 
-  public setMaxBorder(maxBorder: number): boolean {
-    const maxStepSize = maxBorder - this.minBorder;
+  public getView(val: number): NonNullable<primitive> {
+    return `${val}`;
+  }
+
+  public setMaxBoundary(max: number): boolean {
+    const maxStepSize = this._mm.sub(max, this.min);
+    const lastPointValue = this._getPoint(this.lastPointIndex).value;
+    const isMatchLeftBoundary = this._mm.sub(max, lastPointValue) > 0;
     if (
-      this.minBorder < maxBorder
+      this.min < max
       && this._step <= maxStepSize
-      && this._isMatchLeftBorder(this.maxBorderIndex, maxBorder)
+      && isMatchLeftBoundary
     ) {
-      this._setMaxBorderUnsafe(maxBorder);
-      this._pp.setBorders(this.minBorder, maxBorder);
+      this._setMaxBoundaryUnsafe(max);
+      this._pp.setBoundaries(this.min, max);
       return true;
     }
 
@@ -95,7 +123,7 @@ abstract class DataProcessor {
   }
 
   public setStep(step: number): boolean {
-    const maxStepSize = this.maxBorder - this.minBorder;
+    const maxStepSize = this._mm.sub(this.max, this.min);
     if (0 < step && step <= maxStepSize) {
       this._step = step;
       return true;
@@ -104,272 +132,222 @@ abstract class DataProcessor {
     return false;
   }
 
-  public setPoint(pointIndex: number, pointValue: number): boolean {
-    if (
-      this._isValidPointIndex(pointIndex)
-      && this._isPointMatchBorders(pointIndex, pointValue)
-    ) {
-      this._setPointUnsafe(pointIndex, pointValue);
-      return true;
+  public setPoint(val: number, index: number): boolean {
+    if (this._isValidPointIndex(index)) {
+      if (this._isMatchBoundaries(val, index)) {
+        this._setPointUnsafe(val, index);
+        return true;
+      }
     }
 
     return false;
   }
 
-  public setPoints(points: Array<number>): boolean {
-    if (points.length < this.numberOfPoints) {
+  public movePoint(offset: number, index: number): boolean {
+    const [direction, offsetAbs] = this._decomposeOffset(offset);
+    const stepsRounded = Math.round(this._convertToSteps(offsetAbs));
+    const isOffsetInsignificant = stepsRounded === 0;
+    if (isOffsetInsignificant) {
       return false;
     }
 
-    const currentState = [...this._currentState];
-    this._forEachPoint((_, i) => this._setPointUnsafe(i, this.maxBorder));
-    const isValidPoints = this._everyPoint((_, i) => {
-      return this.setPoint(i, points[i])
-    });
-    if (isValidPoints) {
-      return true;
+    const targetValue = this._getTargetValue(stepsRounded, direction, index);
+    this._setPointUnsafe(targetValue, index);
+    return true;
+  }
+
+  public movePointInPercent(index: number, offsetInPercent: number): boolean {
+    const offset = this._pp.convertToValue(offsetInPercent);
+    return this.movePoint(index, offset);
+  }
+
+  public setPoints(values: Array<number>): boolean {
+    if (values.length < this.numberOfPoints) {
+      return false;
     }
 
-    this._currentState = [...currentState];
-    return false;
+    try {
+      this._isValidPointValues([this.min, ...values, this.max])
+      values.forEach((val, i) => this._setPointUnsafe(val, i));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  public prependPoint(pointValue: number): boolean {
-    return this.addPoint(0, pointValue);
+  public prependPoint(val: number): boolean {
+    return this.addPoint(val, 0);
   }
 
-  public appendPoint(pointValue: number): boolean {
-    return this.addPoint(this.numberOfPoints, pointValue);
+  public appendPoint(val: number): boolean {
+    return this.addPoint(val, this.numberOfPoints);
   }
 
-  public addPoint(pointIndex: number, pointValue: number): boolean {
-    const currentState = [...this._currentState];
+  public addPoint(val: number, index: number): boolean {
     const isValidInsertPosition = (
-      this._isValidPointIndex(pointIndex)
-      || pointIndex === this.numberOfPoints
+      0 <= index
+      && index <= this.numberOfPoints
     );
     if (!isValidInsertPosition) {
       return false;
     }
 
-    const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    this._currentState.splice(positionIndex, 0, pointValue);
-    if (this._isMatchBorders(positionIndex, pointValue)) {
-      return true;
-    }
-
-    this._currentState = [...currentState];
-    return false;
-  }
-
-  public removePoint(pointIndex: number): boolean {
-    if (
-      this.numberOfPoints !== 1
-      && this._isValidPointIndex(pointIndex)
-    ) {
-      const positionIndex = this._getPositionIndexForPoint(pointIndex);
-      this._currentState.splice(positionIndex, 1);
-      return true;
-    }
-
-    return false;
-  }
-
-  public movePoint(pointIndex: number, offset: number): boolean {
-    if (!this._isValidPointIndex(pointIndex)) {
+    if (!this._isMatchBoundaries(val, index)) {
       return false;
     }
 
-    const [direction, offsetAbs] = this._decomposeOffset(offset);
-    const numberOfStepsRounded = Math.round(this._convertToSteps(offsetAbs));
-    const isOffsetInsignificant = numberOfStepsRounded === 0;
-    if (isOffsetInsignificant) {
-      return false;
-    }
-
-    const targetValue = this._getTargetValue(pointIndex, numberOfStepsRounded, direction);
-    this._setPointUnsafe(pointIndex, targetValue);
+    const point = this.createPoint(val);
+    this._points.splice(index, 0, point);
+    const leftBoundary = this._getLeftBoundary(index);
+    this._setIntervalUnsafe(leftBoundary, point, index);
+    const rightBoundary = this._getRightBoundary(index);
+    const interval = this.createInterval(point, rightBoundary);
+    this._intervals.splice(index, 0, interval);
     return true;
   }
 
-  public movePointInPercent(pointIndex: number, offsetInPercent: number): boolean {
-    const offset = this._pp.convertToValue(offsetInPercent);
-    return this.movePoint(pointIndex, offset);
-  }
-
-  public setCurrentStateAsInitial(): void {
-    this._initialState = [...this._currentState];
-  }
-
-  public resetCurrentStateToInitial(): void {
-    this._currentState = [...this._initialState];
-  }
-
-  public getValueSubset(density: number, from?: number, to?: number): Array<number> {
-    const firstSubsetValue = (from !== undefined) ? from : this.minBorder;
-    const lastSubsetValue = (to !== undefined) ? to : this.maxBorder;
-    const step = (density > 0) ? density : this._mm.sub(lastSubsetValue, firstSubsetValue);
-    const valueSubset = [];
-    let value = firstSubsetValue;
-    while (value < lastSubsetValue) {
-      valueSubset.push(value);
-      value = this._mm.add(value, step);
+  public removePoint(index: number): boolean {
+    if (
+      this.numberOfPoints !== 1
+      && this._isValidPointIndex(index)
+    ) {
+      const leftBoundary = this._getLeftBoundary(index);
+      const rightBoundary = this._getRightBoundary(index);
+      this._setIntervalUnsafe(leftBoundary, rightBoundary, index);
+      this._points.splice(index, 1);
+      this._intervals.splice(index + 1, 1);
+      return true;
     }
-    valueSubset.push(lastSubsetValue);
-    return valueSubset;
+
+    return false;
   }
 
-  public getPercentageSubset(density: number, from?: number, to?: number): Array<number> {
-    return this.getValueSubset(density, from, to)
-      .map((val) => this._pp.convertToPercent(val));
-  }
+  public getGrid(density: number, from?: number, to?: number): Array<Point> {
+    const fromGridValue = (from !== undefined) ? from : this.min;
+    const toGridValue = (to !== undefined) ? to : this.max;
+    if (
+      !this._isValidGridFromAndTo(fromGridValue, toGridValue)
+      || !this._isValidGridDensity(density, fromGridValue, toGridValue)
+    ) {
+      return [];
+    }
 
-  public getViewSubset(density: number, from?: number, to?: number): Array<NonNullable<primitive>> {
-    return this.getValueSubset(density, from, to)
-      .map((val) => this._getView(val));
+    const grid = [];
+    let val = fromGridValue;
+    while (val < toGridValue) {
+      grid.push(this.createPoint(val));
+      val = this._mm.add(val, density);
+    }
+    grid.push(this.createPoint(toGridValue));
+    return grid;
   }
 
   public getStep(): number {
     return this._step;
   }
 
-  public getPointValue(pointIndex: number): number {
-    const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    return this._getPosition(positionIndex);
+  protected _getPointValue(index: number): number {
+    return this._getPoint(index).value;
   }
 
-  public getPointValues(): Array<number> {
-    return this._currentState.slice(this.firstPointIndex, this.lastPointIndex + 1);
-  }
-
-  public getPointLocationOnScale(pointIndex: number) {
-    const pointValue = this.getPointValue(pointIndex);
-    return this._pp.reflectOnScale(pointValue);
-  }
-
-  public getPointScale(): Array<number> {
-    const scale: Array<number> = [];
-    this._forEachPoint((pointValue) => {
-      scale.push(this._pp.reflectOnScale(pointValue));
-    })
-    return scale;
-  }
-
-  public getPointView(pointIndex: number): NonNullable<primitive> {
-    return this.getPointValue(pointIndex);
-  }
-
-  public getPointsView(): Array<NonNullable<primitive>> {
-    return this.getPointValues();
-  }
-
-  public getMinBorderView(): NonNullable<primitive> {
-    return this.minBorder;
-  }
-
-  public getMaxBorderView(): NonNullable<primitive> {
-    return this.maxBorder;
-  }
-
-  public getDistanceToBorders(pointIndex: number): Array<number> {
-    const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    return [
-      this._getDistanceToLeftBorder(positionIndex),
-      this._getDistanceToRightBorder(positionIndex)
-    ];
-  }
-
-  public getDistanceToBordersOnScale(pointIndex: number): Array<number> {
-    return this.getDistanceToBorders(pointIndex).map((val) => this._pp.convertToPercent(val));
-  }
-
-  public getDistances(): Array<number> {
-    const distances = [];
-    this._forEachPoint((_, pointIndex) => {
-      const positionIndex = this._getPositionIndexForPoint(pointIndex);
-      distances.push(this._getDistanceToLeftBorder(positionIndex));
-    })
-    distances.push(this._getDistanceToRightBorder(this.lastPointIndex));
-    return distances;
-  }
-
-  public getDistancesOnScale(): Array<number> {
-    const distances = this.getDistances();
-    return distances.map(this._pp.convertToPercent);
-  }
-
-  protected _setPositionUnsafe(positionIndex: number, positionValue: number): void {
-    this._currentState[positionIndex] = positionValue;
-  }
-
-  protected _setMinBorderUnsafe(minBorderValue: number): void {
-    this._setPositionUnsafe(this.minBorderIndex, minBorderValue);
-  }
-
-  protected _setMaxBorderUnsafe(maxBorderValue: number): void {
-    this._setPositionUnsafe(this.maxBorderIndex, maxBorderValue);
-  }
-
-  protected _setPointUnsafe(pointIndex: number, pointValue: number): void {
-    const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    return this._setPositionUnsafe(positionIndex, pointValue);
-  }
-
-  protected _getPositionIndexForPoint(pointIndex: number): number {
-    return this.firstPointIndex + pointIndex;
-  }
-
-  protected _getPosition(positionIndex: number): number {
-    return this._currentState[positionIndex];
-  }
-
-  protected _getView(val: number): NonNullable<primitive> {
-    return val;
-  }
-
-  protected _getTargetValue(pointIndex: number, numberOfSteps: number, direction: direction): number {
-    const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    const currentValue = this._getPosition(positionIndex);
-    let targetValue = this._shiftValueInSteps(currentValue, numberOfSteps, direction);
-    if (this._isMatchBorder(positionIndex, targetValue, direction)) {
+  protected _getTargetValue(steps: number, direction: direction, index: number): number {
+    const currentValue = this._getPointValue(index);
+    let targetValue = this._shiftValueInSteps(currentValue, steps, direction);
+    if (this._isMatchBoundary(targetValue, index, direction)) {
       return targetValue;
     }
 
-    const distanceToBorder = this._getDistanceToBorder(positionIndex, direction);
-    const distanceToBorderInSteps = Math.floor(this._convertToSteps(distanceToBorder));
-    targetValue = this._shiftValueInSteps(currentValue, distanceToBorderInSteps, direction);
+    const distanceToBoundary = this._getDistanceToBoundary(index, direction);
+    const distanceToBoundaryInSteps = Math.floor(this._convertToSteps(distanceToBoundary));
+    targetValue = this._shiftValueInSteps(currentValue, distanceToBoundaryInSteps, direction);
     return targetValue;
   }
 
-  protected _getDistanceToLeftBorder(positionIndex: number): number {
-    return this._getDistanceToBorder(positionIndex, LEFT_DIRECTION);
+  protected _setMinBoundaryUnsafe(val: number): void {
+    this._minBoundary.value = val;
+    const rightBoundary = this._getPoint(0);
+    this._setIntervalUnsafe(this._minBoundary, rightBoundary, 0);
   }
 
-  protected _getDistanceToRightBorder(positionIndex: number): number {
-    return this._getDistanceToBorder(positionIndex, RIGHT_DIRECTION);
+  protected _setMaxBoundaryUnsafe(val: number): void {
+    this._maxBoundary.value = val;
+    const leftBoundary = this._getPoint(this.lastPointIndex);
+    this._setIntervalUnsafe(leftBoundary, this._maxBoundary, this.lastPointIndex);
   }
 
-  protected _getDistanceToBorder(positionIndex: number, direction: direction): number {
-    const position = this._getPosition(positionIndex);
-    const border = this._getBorder(positionIndex, direction);
-    const distance = Math.abs(this._mm.sub(position, border));
-    return distance;
+  protected _setPointUnsafe(val: number, index: number): void {
+    const point = this._points[index];
+    point.value = val;
+    point.percent = this._pp.reflectOnScale(val);
+    const leftBoundary = this._getLeftBoundary(index);
+    this._setIntervalUnsafe(leftBoundary, point, index);
+    const rightBoundary = this._getRightBoundary(index);
+    this._setIntervalUnsafe(point, rightBoundary, index);
   }
 
-  protected _getLeftBorder(positionIndex: number): number {
-    return this._getBorder(positionIndex, LEFT_DIRECTION);
+  protected _setIntervalUnsafe(from: Point, to: Point, index: number): void {
+    const interval = this._getInterval(index);
+    interval.from = from;
+    interval.to = to;
+    const value = this._getDistanceBetweenPoints(from, to);
+    interval.value = value;
+    interval.percent = this._pp.convertToPercent(value);
   }
 
-  protected _getRightBorder(positionIndex: number): number {
-    return this._getBorder(positionIndex, RIGHT_DIRECTION);
+  protected _getInterval(index: number): Interval {
+    return this._intervals[index];
   }
 
-  protected _getBorder(positionIndex: number, direction: direction): number {
-    return this._getPosition(positionIndex + direction);
+  protected _getDistanceToLeftBoundary(index: number): number {
+    return this._getDistanceToBoundary(index, LEFT_DIRECTION);
   }
 
-  protected _shiftValueInSteps(val: number, numberOfSteps: number, direction: direction): number {
-    const offset = this._convertFromSteps(numberOfSteps);
+  protected _getDistanceToRightBoundary(index: number): number {
+    return this._getDistanceToBoundary(index, RIGHT_DIRECTION);
+  }
+
+  protected _getDistanceToBoundary(index: number, direction: direction): number {
+    const point = this._getPoint(index);
+    const boundary = this._getBoundary(index, direction);
+    return this._getDistanceBetweenPoints(point, boundary);
+  }
+
+  protected _getLeftBoundary(index: number): Point {
+    return this._getBoundary(index, LEFT_DIRECTION);
+  }
+
+  protected _getRightBoundary(index: number): Point {
+    return this._getBoundary(index, RIGHT_DIRECTION);
+  }
+
+  protected _getBoundary(index: number, direction: direction): Point {
+    if (
+      index === 0
+      && direction === LEFT_DIRECTION
+    ) {
+      return this._minBoundary;
+    }
+
+    if (
+      index === this.lastPointIndex
+      && direction === RIGHT_DIRECTION
+    ) {
+      return this._maxBoundary;
+    }
+
+    return this._getPoint(index + direction);
+  }
+
+  protected _getPoint(index: number): Point {
+    return this._points[index];
+  }
+
+  protected _getDistanceBetweenPoints(x: Point, y: Point): number {
+    return Math.abs(this._mm.sub(y.value, x.value));
+  }
+
+  protected _shiftValueInSteps(val: number, steps: number, direction: direction): number {
+    const offset = this._convertFromSteps(steps);
     return this._shiftValue(val, offset, direction);
   }
 
@@ -387,14 +365,13 @@ abstract class DataProcessor {
     return this._mm.div(val, this._step);
   }
 
-  protected _convertFromSteps(numberOfSteps: number): number {
-    return this._mm.mul(numberOfSteps, this._step);
+  protected _convertFromSteps(steps: number): number {
+    return this._mm.mul(steps, this._step);
   }
 
-  protected _everyPoint(condition: (pointValue: number, pointIndex: number, currentState: Array<number>) => boolean): boolean {
+  protected _everyPoint(condition: (point: Point, i: number, points: Array<Point>) => boolean): boolean {
     for (let i = 0; i < this.numberOfPoints; i += 1) {
-      const positionIndex = this._getPositionIndexForPoint(i);
-      if (!condition(this._currentState[positionIndex], i, this._currentState)) {
+      if (!condition(this._points[i], i, this._points)) {
         return false;
       }
     }
@@ -402,75 +379,137 @@ abstract class DataProcessor {
     return true;
   }
 
-  protected _forEachPoint(callback: (pointValue: number, pointIndex: number, currentState: Array<number>) => void): void {
-    for (let pointIndex = 0; pointIndex < this.numberOfPoints; pointIndex += 1) {
-      const positionIndex = this._getPositionIndexForPoint(pointIndex );
-      callback(this._currentState[positionIndex], pointIndex, this._currentState);
+  protected _forEachPoint(callback: (point: Point, i: number, points: Array<Point>) => void): void {
+    for (let i = 0; i < this.numberOfPoints; i += 1) {
+      callback(this._points[i], i, this._points);
     }
   }
 
-  protected _isStepValid(step: number): boolean {
-    const lengthOfRange = this.maxBorder - this.minBorder;
+  protected _forEachPair<T>(arr: Array<T>, callback: (cur: T, next: T, pairNumber: number) => void) {
+    for (let i = 0; i < arr.length - 1; i += 1) {
+      callback(arr[i], arr[i + 1], i + 1);
+    }
+  }
+
+  protected _everyPair<T>(arr: Array<T>, condition: (cur: T, next: T, pairNumber: number) => boolean): boolean {
+    for (let i = 0; i < arr.length - 1; i += 1) {
+      if (!condition(arr[i], arr[i + 1], i + 1)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  protected _isNonDecreasingSequence(sequence: Array<number>): boolean {
+    return this._everyPair(sequence, (x, y) => x <= y);
+  }
+
+  protected _isMatchRange(val: number): boolean {
     return (
-      0 < step
-      && step <= lengthOfRange
+      this._isMatchMinBoundary(val)
+      && this._isMatchMaxBoundary(val)
     );
   }
 
-  protected _isMatchRange(positionValue: number): boolean {
+  protected _isMatchMinBoundary(val: number): boolean {
+    return this.min <= val;
+  }
+
+  protected _isMatchMaxBoundary(val: number): boolean {
+    return val <= this.max;
+  }
+
+  protected _isMatchBoundaries(val: number, index: number): boolean {
     return (
-      this._isMatchMinBorder(positionValue)
-      && this._isMatchMaxBorder(positionValue)
+      this._isMatchLeftBoundary(val, index)
+      && this._isMatchRightBoundary(val, index)
     );
   }
 
-  protected _isMatchMinBorder(positionValue: number): boolean {
-    return this.minBorder <= positionValue;
+  protected _isMatchLeftBoundary(val: number, index: number): boolean {
+    return this._isMatchBoundary(val, index, LEFT_DIRECTION);
   }
 
-  protected _isMatchMaxBorder(positionValue: number): boolean {
-    return positionValue <= this.maxBorder;
+  protected _isMatchRightBoundary(val: number, index: number): boolean {
+    return this._isMatchBoundary(val, index, RIGHT_DIRECTION);
   }
 
-  protected _isPointMatchBorders(pointIndex: number, pointValue: number): boolean {
-    const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    return this._isMatchBorders(positionIndex, pointValue);
+  protected _isMatchBoundary(val: number, index: number, direction: direction): boolean {
+    const boundary = this._getBoundary(index, direction);
+    return direction * this._mm.sub(val, boundary.value) <= 0;
   }
 
-  protected _isMatchBorders(positionIndex: number, positionValue: number): boolean {
+  protected _isValidPointIndex(index: number): boolean {
     return (
-      this._isMatchLeftBorder(positionIndex, positionValue)
-      && this._isMatchRightBorder(positionIndex, positionValue)
-    );
-  }
-
-  protected _isMatchLeftBorder(positionIndex: number, positionValue: number): boolean {
-    return this._isMatchBorder(positionIndex, positionValue, LEFT_DIRECTION);
-  }
-
-  protected _isMatchRightBorder(positionIndex: number, positionValue: number): boolean {
-    return this._isMatchBorder(positionIndex, positionValue, RIGHT_DIRECTION);
-  }
-
-  protected _isMatchBorder(positionIndex: number, positionValue: number, direction: direction): boolean {
-    const border = this._getBorder(positionIndex, direction);
-    return direction * this._mm.sub(positionValue, border) <= 0;
-  }
-
-  protected _isValidPointIndex(index: unknown): index is number {
-    return (
-      this._isInteger(index)
-      && 0 <= index
+      0 <= index
       && index < this.numberOfPoints
     );
   }
 
-  protected _isValidPositionIndex(index: unknown): index is number {
-    return (
-      this._isInteger(index)
-      && 0 <= index
-      && index <= this.lastPositionIndex
-    );
+  protected _isValidGridDensity(density: number, from: number, to: number): boolean {
+    if (0 < density) {
+      return true;
+    }
+
+    return false;
+  }
+
+  protected _isValidGridFromAndTo(from: number, to: number): boolean {
+    if (
+      this.min <= from
+      && from < to
+      && to <= this.max
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  protected _isValidStep(step: number, min: number, max: number): void {
+    const maxStepSize = this._mm.sub(max, min);
+    if (
+      step < 0
+      || maxStepSize < step
+    ) {
+      throw "Step is not valid";
+    }
+  }
+
+  protected _isValidPointValues(values: unknown): void {
+    if (!Array.isArray(values)) {
+      throw "Values is not array";
+    }
+
+    const hasOnlyIntegers = values.every((val) => Number.isInteger(val));
+    if (!hasOnlyIntegers) {
+      throw "Values is contains non-integer value";
+    }
+
+    const hasNegativeValue = values.some((val) => val < 0);
+    if (hasNegativeValue) {
+      throw "Values is contains negative value";
+    }
+
+    if (!this._isNonDecreasingSequence(values)) {
+      throw "Values is contains a decreasing subsequence";
+    }
+  }
+
+  protected _init(config: Partial<Config>, defaultConfig: Pick<Config, K>): void {
+    try {
+      this._isValidConfig(config);
+      this._setState(config);
+    } catch (err: unknown) {
+      const isExpectedError = typeof err === 'string';
+      if (!isExpectedError) {
+        throw(err);
+      }
+
+      console.warn(`The configuration is not valid. Error: ${err}.\nThe default configuration will be applied.`);
+      this._setState(defaultConfig);
+    }
   }
 
   protected _isInteger(val: unknown): val is number {

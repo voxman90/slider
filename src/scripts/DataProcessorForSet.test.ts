@@ -18,15 +18,8 @@ describe("Test 'constructor' utility", () => {
     consoleWarnMock.mockReset();
   };
 
-  it("Check warning when config.set is undefined", () => {
-    const err = 'config.set is undefined';
-    const config = {};
-
-    mockTheConstructor(config, err);
-  });
-
   it("Check warning when config.set is not array", () => {
-    const err = 'config.set is not array';
+    const err = 'Set is not array';
     const config: unknown = {
       set: {
         length: 1,
@@ -39,7 +32,7 @@ describe("Test 'constructor' utility", () => {
   });
 
   it("Check warning when config.set has bottom value", () => {
-    const err = 'config.set has undefined or null-ish values';
+    const err = 'Set has undefined or null-ish values';
     const config: unknown = {
       set: [1, 2, null],
     };

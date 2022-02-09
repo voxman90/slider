@@ -1,100 +1,55 @@
 import { ALPHABET } from 'common/constants/Constants';
-import { Configuration, NonBottomValue, primitive } from 'common/types/Types';
+import { Config, NonBottomValue, primitive } from 'common/types/Types';
 
 import DataProcessor from './DataProcessor';
 
-const defaultConfig: Partial<Configuration> = {
+type keysForConfig = 'min' | 'max' | 'step' | 'values' | 'set';
+type ConfigForSet = Pick<Config, keysForConfig>;
+
+const defaultConfig: ConfigForSet = {
+  min: 0,
+  max: 25,
+  step: 1,
+  values: [0],
   set: [...ALPHABET],
 };
 
-class DataProcessorForSet extends DataProcessor {
-  protected _set: Array<NonBottomValue>;
+class DataProcessorForSet extends DataProcessor<keysForConfig> {
+  private _set: Array<NonBottomValue>;
 
-  constructor (config: Partial<Configuration> = {}) {
+  constructor (config: Partial<Config>) {
     super();
     this._set = [];
-
-    try {
-      this._initConfig(config);
-    } catch (err: unknown) {
-      const isExpectedError = typeof err === 'string';
-      if (!isExpectedError) {
-        throw(err);
-      }
-
-      console.warn(`The config is not valid. Error: ${err}.\nThe default config will be applied.`);
-      this._initConfig(defaultConfig);
-    }
+    this._init(config, defaultConfig);
   }
 
   public get lastIndexOfSet(): number {
     return this._set.length - 1;
   }
 
-  public setMinBorder(minBorder: number): boolean {
+  public setMinBoundary(min: number): boolean {
     if (
-      Number.isInteger(minBorder)
-      && 0 <= minBorder
+      Number.isInteger(min)
+      && 0 <= min
     ) {
-      return super.setMinBorder(minBorder);
+      return super.setMinBoundary(min);
     }
 
     return false;
   }
 
-  public setMaxBorder(maxBorder: number): boolean {
+  public setMaxBoundary(max: number): boolean {
     if (
-      Number.isInteger(maxBorder)
-      && maxBorder <= this.lastIndexOfSet
+      Number.isInteger(max)
+      && max <= this.lastIndexOfSet
     ) {
-      return super.setMaxBorder(maxBorder);
+      return super.setMaxBoundary(max);
     }
 
     return false;
   }
 
-  public setStep(step: number): boolean {
-    if (Number.isInteger(step)) {
-      return super.setStep(step);
-    }
-
-    return false;
-  }
-
-  public setPoint(pointIndex: number, pointValue: number): boolean {
-    if (Number.isInteger(pointValue)) {
-      return super.setPoint(pointIndex, pointValue);
-    }
-
-    return false;
-  }
-
-  public getPointView(pointIndex: number): NonNullable<primitive> {
-    return this._getView(pointIndex);
-  }
-
-  public getPointsView(): Array<NonNullable<primitive>> {
-    const view: Array<NonNullable<primitive>> = []
-    this._forEachPoint((_, i) => {
-      view.push(this.getPointView(i));
-    })
-    return view;
-  }
-
-  public getMinBorderView(): NonNullable<primitive> {
-    return this.getPointView(this.minBorder);
-  }
-
-  public getMaxBorderView(): NonNullable<primitive> {
-    return this.getPointView(this.maxBorder);
-  }
-
-  public getValueSubset(density: number, from?: number, to?: number): Array<number> {
-    const step = (Number.isInteger(density)) ? density : this._mm.sub(this.maxBorder, this.minBorder);
-    return super.getValueSubset(step, from, to);
-  }
-
-  protected _getView(index: number): NonNullable<primitive> {
+  public getView(index: number): NonNullable<primitive> {
     const item = this._set[index];
     if (
       typeof item === 'object'
@@ -106,64 +61,119 @@ class DataProcessorForSet extends DataProcessor {
     return item;
   }
 
-  protected _initConfig(config: Partial<Configuration>) {
-    this._isSetValid(config.set);
-    this._set = [...config.set];
-
-    const minIndex = config.min || 0;
-    const maxIndex = config.max || this.lastIndexOfSet;
-    const points = config.points || [minIndex, maxIndex];
-    this._initialState = [minIndex, ...points, maxIndex];
-    this._isInitialStateValid();
-
-    this._pp.setBorders(minIndex, maxIndex);
-    this.resetCurrentStateToInitial();
-
-    this._step = this._isStepValid(config.step) ? config.step : 1;
-  }
-
-  protected _isStepValid(step: unknown): step is number {
-    if (this._isInteger(step)) {
-      return super._isStepValid(step);
+  public setStep(step: number): boolean {
+    if (Number.isInteger(step)) {
+      return super.setStep(step);
     }
 
     return false;
   }
 
-  private _isSetValid(set: unknown): asserts set is Array<NonBottomValue> {
-    if (set === undefined) {
-      throw 'config.set is undefined';
+  public setPoint(val: number, index: number): boolean {
+    if (Number.isInteger(val)) {
+      return super.setPoint(val, index);
     }
 
+    return false;
+  }
+
+  protected _isValidGridDensity(density: number, from: number, to: number): boolean {
+    if (Number.isInteger(density)) {
+      return super._isValidGridDensity(density, from, to);
+    }
+
+    return false;
+  }
+
+  protected _isValidGridFromAndTo(from: number, to: number): boolean {
+    if (
+      Number.isInteger(from)
+      && Number.isInteger(to)
+    ) {
+      return super._isValidGridFromAndTo(from, to);
+    }
+
+    return false;
+  }
+
+  protected _setState(config: ConfigForSet): void {
+    const {
+      set,
+      values,
+      min,
+      max,
+      step,
+    } = config;
+
+    this._pp.setBoundaries(min, max);
+    this._points = this.createPoints([min, ...values, max]);
+    this._intervals = this.createIntervals(this._points);
+    this._set = [...set]; // TODO: Need deep clone or enough shallow copy?
+    this._step = step;
+  }
+
+  protected _isValidConfig(config: Partial<Config>): asserts config is ConfigForSet {
+    const {
+      set,
+      values,
+      min,
+      max,
+      step,
+    } = config;
+
+    if (values === undefined) {
+      throw "Values is undefined";
+    }
+
+    if (min === undefined) {
+      throw "Min is undefined";
+    }
+
+    if (max === undefined) {
+      throw "Max is undefined";
+    }
+
+    this._isValidSet(set);
+    this._isValidPointValues([min, ...values, max]);
+    this._isValidStep(step, min, max);
+  }
+
+  protected _isValidStep(step: unknown, min: number, max: number): asserts step is number {
+    if (!this._isInteger(step)) {
+      throw "Step is non-integer";
+    }
+
+    return super._isValidStep(step, min, max);
+  }
+
+  protected _isValidSet(set: unknown): asserts set is Array<NonBottomValue> {
     if (!Array.isArray(set)) {
-      throw 'config.set is not array';
+      throw "Set is not array";
     }
 
     const hasBottomValue = set.some((val) => val == null);
     if (hasBottomValue) {
-      throw 'config.set has undefined or null-ish values';
+      throw "Set has undefined or null-ish values";
     }
   }
 
-  private _isInitialStateValid(): void {
-    const initialState = this._initialState;
-    const length = initialState.length;
+  protected _isValidPointValues(values: Array<unknown>): asserts values is Array<number> {
+    if (!Array.isArray(values)) {
+      throw "Values is not array";
+    }
 
-    const hasOnlyIntegers = initialState.every((val) => Number.isInteger(val));
+    const hasOnlyIntegers = values.every((val) => Number.isInteger(val));
     if (!hasOnlyIntegers) {
-      throw 'Initial state is contains non-integer value';
+      throw "Values is contains non-integer value";
     }
 
-    const hasNegativeValue = initialState.some((val) => val < 0);
+    const hasNegativeValue = values.some((val) => val < 0);
     if (hasNegativeValue) {
-      throw 'Initial state is contains negative value';
+      throw "Values is contains negative value";
     }
 
-    for (let i = 0; i < length - 1; i += 1) {
-      const hasDecreasingSubsequence = initialState[i + 1] < initialState[i];
-      if (hasDecreasingSubsequence) {
-        throw `Initial state is contains a decreasing subsequence`;
-      }
+    if (!this._isNonDecreasingSequence(values)) {
+      throw "Values is contains a decreasing subsequence";
     }
   }
 }

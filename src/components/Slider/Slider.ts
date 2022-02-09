@@ -23,7 +23,7 @@ class Slider extends BEMBlock {
   public grounds: Array<Ground>;
   public handles: Array<Handle>;
   public activeHandleIndex: number | null;
-  protected _orientation: orientation;
+  public orientation: orientation;
 
   constructor (config: any) {
     super(BLOCK_NAME);
@@ -32,7 +32,7 @@ class Slider extends BEMBlock {
       numberOfHandles = 1,
     } = config;
     this.activeHandleIndex = null;
-    this._orientation = orientation;
+    this.orientation = orientation;
     this.$elem = this._getTemplate();
     this.base = this._createBase();
     this.track = this._createTrack();
@@ -89,14 +89,14 @@ class Slider extends BEMBlock {
 
   public setHandlePosition(index: number, state: PointState) {
     const { offset, leftIndent, rightIndent } = state;
-    this.grounds[index].move(offset, this._orientation);
+    this.grounds[index].move(offset, this.orientation);
     this.handles[index].setOffsetAttr(offset);
-    this.connects[index].resize(leftIndent, this._orientation);
-    this.connects[index + 1].moveAndResize(offset, rightIndent, this._orientation);
+    this.connects[index].resize(leftIndent, this.orientation);
+    this.connects[index + 1].moveAndResize(offset, rightIndent, this.orientation);
   }
 
   protected _getTemplate(): JQuery<HTMLElement> {
-    const orientation = (this._orientation === HORIZONTAL)
+    const orientation = (this.orientation === HORIZONTAL)
       ? this.getModifier(modifier.ORIENTATION_HORIZONTAL)
       : this.getModifier(modifier.ORIENTATION_VERTICAL);
     return super._getTemplate(orientation);

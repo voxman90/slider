@@ -1,39 +1,34 @@
-import { Configuration } from "common/types/Types";
+import { Config } from "common/types/Types";
 
 import DataProcessor from './DataProcessor';
 
-const defaultConfig: Partial<Configuration> = {
-  range: [0, 1],
+type keysForConfig = 'min' | 'max' | 'step' | 'values';
+type ConfigForRange = Pick<Config, keysForConfig> & { range?: [number, number] };
+
+const defaultConfig: ConfigForRange = {
+  min: 0,
+  max: 100,
+  step: 1,
+  values: [50],
 };
 
-class DataProcessorForRange extends DataProcessor {
-  constructor (config: Partial<Configuration> = {}) {
+class DataProcessorForRange extends DataProcessor<keysForConfig> {
+  constructor (config: Partial<Config>) {
     super();
-
-    try {
-      this._initConfig(config);
-    } catch (err: unknown) {
-      const isExpectedError = typeof err === 'string';
-      if (!isExpectedError) {
-        throw(err);
-      }
-
-      console.warn(`The config is not valid. Error: ${err}.\nThe default config will be applied.`);
-      this._initConfig(defaultConfig);
-    }
+    this._init(config, defaultConfig);
   }
 
-  public setMinBorder(minBorder: number): boolean {
-    if (Number.isFinite(minBorder)) {
-      return super.setMinBorder(minBorder);
+  public setMinBoundary(min: number): boolean {
+    if (Number.isFinite(min)) {
+      return super.setMinBoundary(min);
     }
 
     return false;
   }
 
-  public setMaxBorder(maxBorder: number): boolean {
-    if (Number.isFinite(maxBorder)) {
-      return super.setMaxBorder(maxBorder);
+  public setMaxBoundary(max: number): boolean {
+    if (Number.isFinite(max)) {
+      return super.setMaxBoundary(max);
     }
 
     return false;
@@ -47,83 +42,83 @@ class DataProcessorForRange extends DataProcessor {
     return false;
   }
 
-  public setPointWithShift(pointIndex: number, pointValue: number): boolean {
-    if (!this._isValidPointIndex(pointIndex)) {
-      return false;
+  protected _setState(config: ConfigForRange): void {
+    let {
+      values,
+      min,
+      max,
+      step,
+      range,
+    } = config;
+
+    if (range !== undefined) {
+      [min, max] = range;
     }
 
-    if (!this._isMatchRange(pointValue)) {
-      return false;
-    }
-
-    const positionIndex = this._getPositionIndexForPoint(pointIndex);
-    this._setPositionUnsafe(positionIndex, pointValue);
-
-    const shift = (checkedPointValue: number, checkedPointIndex: number) => {
-      const isShiftedPosition = (checkedPointValue - pointValue) * (checkedPointIndex - pointIndex) < 0;
-      if (isShiftedPosition) {
-        this._setPositionUnsafe(checkedPointIndex, pointValue);
-      }
-    };
-
-    this._forEachPoint(shift);
-
-    return true;
+    this._pp.setBoundaries(min, max);
+    this._points = this.createPoints([min, ...values, max]);
+    this._intervals = this.createIntervals(this._points);
+    this._step = step;
   }
 
-  protected _initConfig(config: Partial<Configuration>) {
-    const isMinAndMaxSet = config.min !== undefined && config.max !== undefined;
-    const range = (isMinAndMaxSet) ? [config.min, config.max] : config.range;
-    this._isRangeValid(range);
-    const [min, max] = range;
+  protected _isValidConfig(config: Partial<Config>): asserts config is ConfigForRange {
+    const {
+      values,
+      min,
+      max,
+      step,
+      range,
+    } = config;
 
-    const points = config.points || [min, max];
-    this._initialState = [min, ...points, max];
-    this._isInitialStateValid();
-
-    this._pp.setBorders(min, max);
-    this.resetCurrentStateToInitial();
-
-    this._step = this._isStepValid(config.step) ? config.step : this._mm.sub(this.maxBorder, this.minBorder);
-  }
-
-  protected _isStepValid(step: unknown): step is number {
-    if (this._isFinite(step)) {
-      return super._isStepValid(step);
+    if (values === undefined) {
+      throw "Values is undefined";
     }
 
-    return false;
-  }
-
-  private _isRangeValid(range: unknown): asserts range is [number, number] {
-    if (range === undefined) {
-      throw 'config.range is undefined';
+    if (
+      range === undefined
+      && (min === undefined || max === undefined)
+    ) {
+      throw "Range and min or max is undefined";
     }
 
+    if (range !== undefined) {
+      this._isValidRange(range);
+      const [minBoundary, maxBoundary] = range;
+      this._isValidPointValues([minBoundary, ...values, maxBoundary]);
+      this._isValidStep(step, minBoundary, maxBoundary);
+    }
+
+    if (min !== undefined && max !== undefined) {
+      this._isValidPointValues([min, ...values, max]);
+      this._isValidStep(step, min, max);
+    }
+  }
+
+  protected _isValidStep(step: unknown, min: number, max: number): asserts step is number {
+    if (!this._isFinite(step)) {
+      throw "Step is not finite number";
+    }
+
+    return super._isValidStep(step, min, max);
+  }
+
+  private _isValidRange(range: unknown): asserts range is [number, number] {
     if (!Array.isArray(range)) {
-      throw 'config.range is not array';
+      throw "Range is not array";
     }
 
     const isPair = range.length === 2;
-    const hasNumericValues = typeof range[0] === 'number' && typeof range[1] === 'number';
+    const hasNumericValues = (
+      typeof range[0] === 'number'
+      && typeof range[1] === 'number'
+    );
     if (!isPair || !hasNumericValues) {
-      throw 'config.range is not pair of numbers';
+      throw "Range is not pair of numbers";
     }
 
     const isDecreasingSequence = range[0] > range[1];
     if (isDecreasingSequence) {
-      throw 'config.range is decreasing number sequence';
-    }
-  }
-
-  private _isInitialStateValid(): void {
-    const initialState = this._initialState;
-    const length = initialState.length;
-    for (let i = 0; i < length - 1; i += 1) {
-      const isDecreasingSubsequence = initialState[i + 1] < initialState[i];
-      if (isDecreasingSubsequence) {
-        throw `Initial state is contains a decreasing subsequence`;
-      }
+      throw "Range is decreasing number sequence";
     }
   }
 }
