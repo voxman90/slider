@@ -18,11 +18,11 @@ export type FixedLengthArray<T extends Array<NonUndefined>> =
 export type EventWithData<Data> = JQuery.TriggeredEvent<EventTarget, Data, EventTarget, EventTarget>;
 
 export interface Config {
-  type: 'range' | 'set';
+  type: string;
   step: number;
   min: number;
   max: number;
-  range: [number, number];
+  range: Array<number>;
   values: Array<number>;
   connects: Array<boolean>;
   set: Array<NonBottomValue>;
@@ -61,31 +61,33 @@ export interface SliderState {
   step: number,
 }
 
-interface PointState {
-  leftIndent: number,
-  offset: number,
-  rightIndent: number,
-  view: NonNullable<primitive>,
-}
-
-interface ModelState {
-  points: Array<PointState>,
-  min: NonNullable<primitive>,
-  max: NonNullable<primitive>,
-  step: number,
-}
-
-interface Point {
+export interface PointState {
   value: number,
   percent: number,
   view: NonNullable<primitive>,
 }
 
-interface Interval {
+export interface IntervalState {
+  value: number,
+  percent: number,
+}
+
+export interface ScaleState {
+  points: Array<PointState>,
+  intervals: Array<IntervalState>,
+  min: PointState,
+  max: PointState,
+  step: number,
+}
+
+export interface Point {
+  value: number,
+  percent: number,
+}
+
+export interface Interval {
   from: Point,
   to: Point,
   value: number,
   percent: number,
 }
-
-export { PointState, ModelState, Point, Interval, };

@@ -1,16 +1,23 @@
 import { ALPHABET } from 'common/constants/Constants';
-import { Configuration } from 'common/types/Types';
+import { Config } from 'common/types/Types';
 
-import Generator from './Generator';
 import DataProcessorForSet from './DataProcessorForSet';
+import Generator from './Generator';
 
 const consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation();
 
 describe("Test 'constructor' utility", () => {
-  const warnMessage = (err: string) => `The config is not valid. Error: ${err}.\nThe default config will be applied.`;
-  const mockTheConstructor = (config: Partial<Configuration>, err: string) => {
+  const config = {
+    set: [...ALPHABET],
+    min: 0,
+    max: 25,
+    values: [0],
+    step: 1,
+  };
+  const warnMessage = (err: string) => `The configuration is not valid. Error: ${err}.\nThe default configuration will be applied.`;
+  const mockConstructor = (config: Partial<Config>, err: string, extraConfigProperties: object = {}) => {
     try {
-      new DataProcessorForSet(config);
+      new DataProcessorForSet(Object.assign({}, config, extraConfigProperties));
     } finally {
       expect(consoleWarnMock).toHaveBeenCalledWith(warnMessage(err));
     }
@@ -18,131 +25,76 @@ describe("Test 'constructor' utility", () => {
     consoleWarnMock.mockReset();
   };
 
-  it("Check warning when config.set is not array", () => {
-    const err = 'Set is not array';
-    const config: unknown = {
-      set: {
-        length: 1,
-        '0': 0,
-        '1': 1,
-      },
-    };
-
-    mockTheConstructor(config as Configuration, err);
+  it("Should warning when config.set is not array", () => {
+    const err = "Set is not array";
+    mockConstructor(config, err, { set: { length: 1, '0': 0, '1': 1 }});
   });
 
-  it("Check warning when config.set has bottom value", () => {
-    const err = 'Set has undefined or null-ish values';
-    const config: unknown = {
-      set: [1, 2, null],
-    };
-
-    mockTheConstructor(config as Configuration, err);
+  it("Should warning when config.set has bottom value", () => {
+    const err = "Set has undefined or null-ish values";
+    mockConstructor(config, err, { max: 2, set: [1, 2, null] });
   });
 
-  it("Check warning when 'points', 'min' or 'max' is contains negative value", () => {
-    const err = 'Initial state is contains negative value';
-    const config = {
-      set: [...ALPHABET],
-      points: [1, 2, 3],
-      min: -1,
-      max: 4,
-    };
-
-    mockTheConstructor(config, err);
+  it("Should warning when config.values is contains negative value", () => {
+    const err = "Values is contains negative value";
+    mockConstructor(config, err, { values: [1, -2, 3] });
   });
 
-  it("Check warning when initial state is contains a decreasing subsequence", () => {
-    const err = 'Initial state is contains a decreasing subsequence';
-    const config = {
-      set: [...ALPHABET],
-      points: [1, 3, 2],
-      min: 0,
-      max: 5,
-    };
-
-    mockTheConstructor(config, err);
+  it("Should warning when config.values is contains a decreasing subsequence", () => {
+    const err = "Values is contains a decreasing subsequence";
+    mockConstructor(config, err, { values: [1, 3, 2] });
   });
 
-  it("Check warning when initial state is contains a non-integer value", () => {
-    const err = 'Initial state is contains non-integer value';
-    const config = {
-      set: [...ALPHABET],
-      points: [1, 2, 2.1],
-    };
-
-    mockTheConstructor(config, err);
-  });
-
-  it("Checks that the constructor works without warnings if config is set only by a valid 'set'", () => {
-    const config = {
-      set: [...ALPHABET],
-    };
-
-    try {
-      new DataProcessorForSet(config);
-    } finally {
-      expect(consoleWarnMock).not.toHaveBeenCalled();
-    }
-
-    consoleWarnMock.mockRestore();
+  it("Should warning when values is contains a non-integer value", () => {
+    const err = "Values is contains non-integer value";
+    mockConstructor(config, err, { values: [1, 2, 2.1] });
   });
 });
 
-describe("Test the functionality of the methods that set the min or max border", () => {
-  const dataProcessorInitializer = (points: Array<number>, min: number, max: number) => {
-    const config = {
-      set: [...ALPHABET],
-      points,
-      min,
-      max,
-    };
-    return new DataProcessorForSet(config);
+describe("Test the functionality of the methods that set the boundaries", () => {
+  const config = {
+    set: [...ALPHABET],
+    min: 0,
+    max: 25,
+    values: [10, 20],
+    step: 1,
   };
+  let dp = new DataProcessorForSet(config);
 
-  it("The min border cannot be less than zero", () => {
-    const dp = dataProcessorInitializer([15], 0, 25);
-    expect(dp.setMinBorder(-1)).toBeFalsy();
-    expect(dp.minBorder).toStrictEqual(0);
+  afterEach(() => {
+    dp = new DataProcessorForSet(config);
   });
 
-  it("The min border must be less or equal than the first point index", () => {
-    const dp = dataProcessorInitializer([15], 0, 25);
-    const index = Generator.getRandomInt(0, 15);
-    expect(dp.setMinBorder(index)).toBeTruthy();
-    expect(dp.minBorder).toStrictEqual(index);
+  it("Min boundary shouldn't be less than zero", () => {
+    expect(dp.setMinBoundary(-1)).toBeFalsy();
   });
 
-  it("The min border cannot be greater than the first point index", () => {
-    const dp = dataProcessorInitializer([15], 0, 25);
-    const index = Generator.getRandomInt(16, 25);
-    expect(dp.setMinBorder(index)).toBeFalsy();
-    expect(dp.minBorder).toStrictEqual(0);
+  it("Min boundary value should be less than or equal to the first point value", () => {
+    let val = Generator.getRandomInt(0, config.values[0]);
+    expect(dp.setMinBoundary(val)).toBeTruthy();
+    expect(dp.min).toStrictEqual(val);
+    val = Generator.getRandomInt(config.values[0], config.max);
+    expect(dp.setMinBoundary(val)).toBeFalsy();
   });
 
-  it("The max border cannot be less than the last point index", () => {
-    const dp = dataProcessorInitializer([15, 20], 0, 25);
-    const index = Generator.getRandomInt(0, 19);
-    expect(dp.setMaxBorder(index)).toBeFalsy();
-    expect(dp.maxBorder).toStrictEqual(25);
+  it("Max boundary shouldn't be greater than last index of set", () => {
+    expect(dp.setMaxBoundary(config.set.length)).toBeFalsy();
   });
 
-  it("The max border must be greater or equal than the last point index", () => {
-    const dp = dataProcessorInitializer([15, 20], 0, 25);
-    const index = Generator.getRandomInt(20, 25);
-    expect(dp.setMaxBorder(index)).toBeTruthy();
-    expect(dp.maxBorder).toStrictEqual(index);
+  it("Max boundary should be greater than or equal to the last point index", () => {
+    let val = Generator.getRandomInt(0, config.values[1]);
+    expect(dp.setMaxBoundary(val)).toBeFalsy();
+    val = Generator.getRandomInt(config.values[1], config.set.length - 1);
+    expect(dp.setMaxBoundary(val)).toBeTruthy();
+    expect(dp.max).toStrictEqual(val);
   });
 
-  it("The min border must be less than the max border", () => {
-    const dp = dataProcessorInitializer([15], 0, 25);
-    expect(dp.setMaxBorder(15)).toBeTruthy();
-    expect(dp.setMinBorder(15)).toBeFalsy();
-  });
-
-  it("The max border must be greater than the min border", () => {
-    const dp = dataProcessorInitializer([15], 0, 25);
-    expect(dp.setMinBorder(15)).toBeTruthy();
-    expect(dp.setMaxBorder(15)).toBeFalsy();
+  it("The min border should be less than the max border", () => {
+    dp.removePoint(1);
+    expect(dp.setMaxBoundary(config.values[0])).toBeTruthy();
+    expect(dp.setMinBoundary(config.values[0])).toBeFalsy();
+    expect(dp.setMaxBoundary(config.set.length - 1)).toBeTruthy();
+    expect(dp.setMinBoundary(config.values[0])).toBeTruthy();
+    expect(dp.setMaxBoundary(config.values[0])).toBeFalsy();
   });
 });

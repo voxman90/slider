@@ -56,8 +56,10 @@ class DataProcessorForRange extends DataProcessor<keysForConfig> {
     }
 
     this._pp.setBoundaries(min, max);
-    this._points = this.createPoints([min, ...values, max]);
-    this._intervals = this.createIntervals(this._points);
+    this._minBoundary.value = min;
+    this._maxBoundary.value = max;
+    this._points = this.createPoints(values);
+    this._intervals = this.createIntervals([this._minBoundary, ...this._points, this._maxBoundary]);
     this._step = step;
   }
 
@@ -119,6 +121,16 @@ class DataProcessorForRange extends DataProcessor<keysForConfig> {
     const isDecreasingSequence = range[0] > range[1];
     if (isDecreasingSequence) {
       throw "Range is decreasing number sequence";
+    }
+  }
+
+  protected _isValidPointValues(values: unknown): void {
+    if (!Array.isArray(values)) {
+      throw "Values is not array";
+    }
+
+    if (!this._isNonDecreasingSequence(values)) {
+      throw "Values is contains a decreasing subsequence";
     }
   }
 }

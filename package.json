@@ -4,7 +4,7 @@
   "description": "Simple slider with minimal functionality",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --silent=false",
     "tets": "jest",
     "dev": "webpack --mode development"
   },

@@ -1,4 +1,4 @@
-import { Configuration } from 'common/types/Types';
+import { Config } from 'common/types/Types';
 
 import DataProcessorForRange from './DataProcessorForRange';
 import Generator from './Generator';
@@ -6,10 +6,17 @@ import Generator from './Generator';
 const consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation();
 
 describe("Test 'constructor' utility", () => {
-  const warnMessage = (err: string) => `The config is not valid. Error: ${err}.\nThe default config will be applied.`;
-  const mockTheConstructor = (config: Partial<Configuration>, err: string) => {
+  const config = {
+    min: 0,
+    max: 1,
+    range: [0, 1],
+    values: [0.5],
+    step: 0.1,
+  };
+  const warnMessage = (err: string) => `The configuration is not valid. Error: ${err}.\nThe default configuration will be applied.`;
+  const mockConstructor = (config: Partial<Config>, err: string, extraConfigProperties: object = {}) => {
     try {
-      new DataProcessorForRange(config);
+      new DataProcessorForRange(Object.assign({}, config, extraConfigProperties));
     } finally {
       expect(consoleWarnMock).toHaveBeenCalledWith(warnMessage(err));
     }
@@ -17,130 +24,81 @@ describe("Test 'constructor' utility", () => {
     consoleWarnMock.mockReset();
   };
 
-  it("Check warning when config.range is undefined", () => {
-    const err = 'config.range is undefined';
-    const config = {};
-
-    mockTheConstructor(config, err);
+  it("Should warning when range and min or max is undefined", () => {
+    const err = "Range and min or max is undefined";
+    mockConstructor(config, err, { range: undefined, min: undefined });
+    mockConstructor(config, err, { range: undefined, max: undefined });
   });
 
-  it("Check warning when config.range is not array", () => {
-    const err = 'config.range is not array';
-    const config: unknown = {
-      range: {
-        length: 1,
-        '0': 0,
-        '1': 1,
-      },
-    };
-
-    mockTheConstructor(config as Configuration, err);
+  it("Should warning when config.range is not array", () => {
+    const err = "Range is not array";
+    mockConstructor(config, err, { range: {} });
   });
 
-  it("Check warning when config.range is not pair of numbers", () => {
-    const err = 'config.range is not pair of numbers';
-    const config: unknown = {
-      range: [0, true],
-    };
-
-    mockTheConstructor(config as Configuration, err);
+  it("Should warning when config.range is not pair of numbers", () => {
+    const err = "Range is not pair of numbers";
+    mockConstructor(config, err, { range: [1, '2'] });
   });
 
-  it("Check warning when config.range is decreasing number sequence", () => {
-    const err = 'config.range is decreasing number sequence';
-    const config: unknown = {
-      range: [2, -1],
-    };
-
-    mockTheConstructor(config as Configuration, err);
+  it("Should warning when config.range is decreasing number sequence", () => {
+    const err = "Range is decreasing number sequence";
+    mockConstructor(config, err, { range: [2, 1] });
   });
 
-  it("Check warning when initial state is contains a decreasing subsequence", () => {
-    const err = 'Initial state is contains a decreasing subsequence';
-    const config = {
-      points: [-10, 30, 0],
-      min: -100,
-      max: 100,
-    };
-
-    mockTheConstructor(config, err);
-  });
-
-  it("Checks that the constructor works without warnings if config is set only by a valid 'range'", () => {
-    const config: Partial<Configuration> = {
-      range: [-100, 100],
-    };
-
-    try {
-      new DataProcessorForRange(config);
-    } finally {
-      expect(consoleWarnMock).not.toHaveBeenCalled();
-    }
-
-    consoleWarnMock.mockRestore();
+  it("Should warning when initial state is contains a decreasing subsequence", () => {
+    const err = "Values is contains a decreasing subsequence";
+    mockConstructor(config, err, { values: [0.4, 0.3, 0.5] });
   });
 });
 
-describe("Test the functionality of the methods that set the min or max border", () => {
-  const dataProcessorInitializer = () => {
-    const config: Partial<Configuration> = {
-      range: [-100, 100],
-      points: [50],
-      step: 10,
-    };
-    return new DataProcessorForRange(config);
+describe("Test the functionality of the methods that set the boundaries", () => {
+  const config = {
+    min: 0,
+    max: 100,
+    values: [25, 75],
+    step: 1,
   };
-  const dp = dataProcessorInitializer();
+  let dp = new DataProcessorForRange(config);
 
-  it("The min border must be finite", () => {
-    expect(dp.setMaxBorder(-Infinity)).toBeFalsy();
-    expect(dp.setMaxBorder(Infinity)).toBeFalsy();
-    expect(dp.setMaxBorder(NaN)).toBeFalsy();
-    expect(dp.minBorder).toStrictEqual(-100);
+  afterEach(() => {
+    dp = new DataProcessorForRange(config);
   });
 
-  it("The min border must be less or equal than the first point", () => {
-    const val = Generator.getRandomNumber(-100, 50);
-    expect(dp.setMinBorder(val)).toBeTruthy();
-    expect(dp.minBorder).toStrictEqual(val);
-    dp.resetCurrentStateToInitial();
+  it("Min boundary should be finite", () => {
+    expect(dp.setMinBoundary(-Infinity)).toBeFalsy();
+    expect(dp.setMinBoundary(Infinity)).toBeFalsy();
+    expect(dp.setMinBoundary(NaN)).toBeFalsy();
   });
 
-  it("The min border must be less than max border", () => {
-    expect(dp.setPoint(0, 100)).toBeTruthy();
-    expect(dp.setMinBorder(100)).toBeFalsy();
-    dp.resetCurrentStateToInitial();
+  it("Min boundary should be less than or equal to the first point val", () => {
+    let val = Generator.getRandomNumber(-1e7, config.values[0]);
+    expect(dp.setMinBoundary(val)).toBeTruthy();
+    expect(dp.min).toStrictEqual(val);
+    val = Generator.getRandomNumber(config.values[0] + 1e-7, 1e7);
+    expect(dp.setMinBoundary(val)).toBeFalsy();
   });
 
-  it("The min border can't be greater than the first point", () => {
-    const val = Generator.getRandomNumber(50, 99);
-    expect(dp.setMinBorder(val)).toBeFalsy();
-    expect(dp.minBorder).toStrictEqual(-100);
+  it("Min boundary should be less than max boundary", () => {
+    dp.removePoint(1);
+    const firstPointValue = config.values[0];
+    expect(dp.setMaxBoundary(firstPointValue)).toBeTruthy();
+    expect(dp.setMinBoundary(firstPointValue)).toBeFalsy();
+    expect(dp.setMaxBoundary(firstPointValue + 1)).toBeTruthy();
+    expect(dp.setMinBoundary(firstPointValue)).toBeTruthy();
+    expect(dp.setMaxBoundary(firstPointValue)).toBeFalsy();
   });
 
-  it("The max border must be finite", () => {
-    expect(dp.setMaxBorder(-Infinity)).toBeFalsy();
-    expect(dp.setMaxBorder(Infinity)).toBeFalsy();
-    expect(dp.setMaxBorder(NaN)).toBeFalsy();
-    expect(dp.maxBorder).toStrictEqual(100);
+  it("Max boundary should be finite", () => {
+    expect(dp.setMaxBoundary(-Infinity)).toBeFalsy();
+    expect(dp.setMaxBoundary(Infinity)).toBeFalsy();
+    expect(dp.setMaxBoundary(NaN)).toBeFalsy();
   });
 
-  it("The max border can't be less than the last point", () => {
-    const val = Generator.getRandomNumber(-150, 49);
-    expect(dp.setMaxBorder(val)).toBeFalsy();
-    expect(dp.maxBorder).toStrictEqual(100);
-  });
-
-  it("The max border must be greater or equal than the last point", () => {
-    const val = Generator.getRandomNumber(50, 100);
-    expect(dp.setMaxBorder(val)).toBeTruthy();
-    expect(dp.maxBorder).toStrictEqual(val);
-    dp.resetCurrentStateToInitial();
-  });
-
-  it("The max border must be greater than the min border", () => {
-    expect(dp.setPoint(0, -100)).toBeTruthy();
-    expect(dp.setMaxBorder(-100)).toBeFalsy();
-    dp.resetCurrentStateToInitial();
+  it("The max boundary should be greater than or equal to the last point val", () => {
+    let val = Generator.getRandomNumber(config.values[1], 1e7);
+    expect(dp.setMaxBoundary(val)).toBeTruthy();
+    expect(dp.max).toStrictEqual(val);
+    val = Generator.getRandomNumber(-1e7, config.values[1] - 1e-7);
+    expect(dp.setMaxBoundary(val)).toBeFalsy();
   });
 });

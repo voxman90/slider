@@ -1,5 +1,5 @@
 import { LEFT_DIRECTION, RIGHT_DIRECTION } from "common/constants/Constants";
-import { Config, direction, Point, Interval, primitive } from "common/types/Types";
+import { Config, direction, Point, Interval, primitive, PointState, IntervalState, ScaleState } from "common/types/Types";
 
 import PercentageProcessorFixed from "./PercentageProcessorFixed";
 import MathModule from "./MathModule";
@@ -13,6 +13,7 @@ abstract class DataProcessor<K extends keyof Config> {
   protected _intervals: Array<Interval>;
   protected _step: number;
   protected abstract _isValidConfig(config: Partial<Config>): asserts config is Pick<Config, K>;
+  protected abstract _isValidPointValues(values: unknown): void;
   protected abstract _setState(config: Pick<Config, K>): void;
 
   constructor(mm?: MathModule) {
@@ -80,14 +81,13 @@ abstract class DataProcessor<K extends keyof Config> {
     return {
       value,
       percent: (percent === undefined) ? this._pp.reflectOnScale(value) : percent,
-      view: this.getView(value),
     };
   }
 
   public setMinBoundary(min: number): boolean {
     const maxStepSize = this._mm.sub(this.max, min);
     const firstPointValue = this._getPoint(0).value;
-    const isMatchRightBoundary = this._mm.sub(firstPointValue, min) > 0;
+    const isMatchRightBoundary = this._mm.sub(firstPointValue, min) >= 0;
     if (
       min < this.max
       && this._step <= maxStepSize
@@ -101,14 +101,10 @@ abstract class DataProcessor<K extends keyof Config> {
     return false;
   }
 
-  public getView(val: number): NonNullable<primitive> {
-    return `${val}`;
-  }
-
   public setMaxBoundary(max: number): boolean {
     const maxStepSize = this._mm.sub(max, this.min);
     const lastPointValue = this._getPoint(this.lastPointIndex).value;
-    const isMatchLeftBoundary = this._mm.sub(max, lastPointValue) > 0;
+    const isMatchLeftBoundary = this._mm.sub(max, lastPointValue) >= 0;
     if (
       this.min < max
       && this._step <= maxStepSize
@@ -144,6 +140,10 @@ abstract class DataProcessor<K extends keyof Config> {
   }
 
   public movePoint(offset: number, index: number): boolean {
+    if (!this._isValidPointIndex(index)) {
+      return false;
+    }
+
     const [direction, offsetAbs] = this._decomposeOffset(offset);
     const stepsRounded = Math.round(this._convertToSteps(offsetAbs));
     const isOffsetInsignificant = stepsRounded === 0;
@@ -175,34 +175,79 @@ abstract class DataProcessor<K extends keyof Config> {
     }
   }
 
-  public prependPoint(val: number): boolean {
-    return this.addPoint(val, 0);
+  getIntervalState(index: number): IntervalState {
+    const { value, percent } = this._getInterval(index);
+    return {
+      value,
+      percent,
+    }
   }
 
-  public appendPoint(val: number): boolean {
-    return this.addPoint(val, this.numberOfPoints);
+  getPointState(index: number): PointState {
+    const { value, percent } = this._getPoint(index);
+    return {
+      value,
+      percent,
+      view: this._getView(value),
+    }
   }
 
-  public addPoint(val: number, index: number): boolean {
-    const isValidInsertPosition = (
-      0 <= index
-      && index <= this.numberOfPoints
-    );
-    if (!isValidInsertPosition) {
+  getMinBoundaryState(): PointState {
+    const { value, percent } = this._minBoundary;
+    return {
+      value,
+      percent,
+      view: this._getView(value),
+    }
+  }
+
+  getMaxBoundaryState(): PointState {
+    const { value, percent } = this._maxBoundary;
+    return {
+      value,
+      percent,
+      view: this._getView(value),
+    }
+  }
+
+  getScaleState(): ScaleState {
+    const points = [];
+    const intervals = [this.getIntervalState(0)];
+    for (let i = 0; i < this.numberOfPoints; i += 1) {
+      points.push(this.getPointState(i));
+      intervals.push(this.getIntervalState(i + 1));
+    }
+    return {
+      points,
+      intervals,
+      step: this._step,
+      min: this.getMinBoundaryState(),
+      max: this.getMaxBoundaryState(),
+    }
+  }
+
+  public prependPoint(value: number): boolean {
+    return this.addPoint(value, 0);
+  }
+
+  public appendPoint(value: number): boolean {
+    return this.addPoint(value, this.lastPointIndex + 1);
+  }
+
+  public addPoint(value: number, insertPosition: number): boolean {
+    if (
+      !this._isValidIntervalIndex(insertPosition)
+      || !this._isMatchIntervalBoundaries(value, insertPosition)
+    ) {
       return false;
     }
 
-    if (!this._isMatchBoundaries(val, index)) {
-      return false;
-    }
-
-    const point = this.createPoint(val);
-    this._points.splice(index, 0, point);
-    const leftBoundary = this._getLeftBoundary(index);
-    this._setIntervalUnsafe(leftBoundary, point, index);
-    const rightBoundary = this._getRightBoundary(index);
+    const point = this.createPoint(value);
+    this._points.splice(insertPosition, 0, point);
+    const { from: leftBoundary, to: rightBoundary } = this._getInterval(insertPosition);
+    this._setIntervalUnsafe(leftBoundary, point, insertPosition);
     const interval = this.createInterval(point, rightBoundary);
-    this._intervals.splice(index, 0, interval);
+    this._intervals.splice(insertPosition + 1, 0, interval);
     return true;
   }
 
@@ -233,10 +278,10 @@ abstract class DataProcessor<K extends keyof Config> {
     }
 
     const grid = [];
-    let val = fromGridValue;
-    while (val < toGridValue) {
-      grid.push(this.createPoint(val));
-      val = this._mm.add(val, density);
+    let value = fromGridValue;
+    while (value < toGridValue) {
+      grid.push(this.createPoint(value));
+      value = this._mm.add(value, density);
     }
     grid.push(this.createPoint(toGridValue));
     return grid;
@@ -248,6 +293,10 @@ abstract class DataProcessor<K extends keyof Config> {
 
   protected _getPointValue(index: number): number {
     return this._getPoint(index).value;
+  }
+
+  protected _getView(val: number): NonNullable<primitive> {
+    return `${val}`;
   }
 
   protected _getTargetValue(steps: number, direction: direction, index: number): number {
@@ -276,13 +325,13 @@ abstract class DataProcessor<K extends keyof Config> {
   }
 
   protected _setPointUnsafe(val: number, index: number): void {
-    const point = this._points[index];
+    const point = this._getPoint(index);
     point.value = val;
     point.percent = this._pp.reflectOnScale(val);
     const leftBoundary = this._getLeftBoundary(index);
     this._setIntervalUnsafe(leftBoundary, point, index);
     const rightBoundary = this._getRightBoundary(index);
-    this._setIntervalUnsafe(point, rightBoundary, index);
+    this._setIntervalUnsafe(point, rightBoundary, index + 1);
   }
 
   protected _setIntervalUnsafe(from: Point, to: Point, index: number): void {
@@ -440,10 +489,25 @@ abstract class DataProcessor<K extends keyof Config> {
     return direction * this._mm.sub(val, boundary.value) <= 0;
   }
 
+  protected _isMatchIntervalBoundaries(val: number, index: number): boolean {
+    const { from, to } = this._getInterval(index);
+    return (
+      from.value <= val
+      && val <= to.value
+    );
+  }
+
   protected _isValidPointIndex(index: number): boolean {
     return (
       0 <= index
-      && index < this.numberOfPoints
+      && index <= this.lastPointIndex
+    );
+  }
+
+  protected _isValidIntervalIndex(index: number): boolean {
+    return (
+      0 <= index
+      && index <= this.lastPointIndex + 1
     );
   }
 
@@ -474,26 +538,6 @@ abstract class DataProcessor<K extends keyof Config> {
       || maxStepSize < step
     ) {
       throw "Step is not valid";
-    }
-  }
-
-  protected _isValidPointValues(values: unknown): void {
-    if (!Array.isArray(values)) {
-      throw "Values is not array";
-    }
-
-    const hasOnlyIntegers = values.every((val) => Number.isInteger(val));
-    if (!hasOnlyIntegers) {
-      throw "Values is contains non-integer value";
-    }
-
-    const hasNegativeValue = values.some((val) => val < 0);
-    if (hasNegativeValue) {
-      throw "Values is contains negative value";
-    }
-
-    if (!this._isNonDecreasingSequence(values)) {
-      throw "Values is contains a decreasing subsequence";
     }
   }
 

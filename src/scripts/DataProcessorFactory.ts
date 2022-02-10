@@ -1,10 +1,9 @@
-import { Configuration } from "common/types/Types";
+import { Config } from "common/types/Types";
 
-import DataProcessor from "./DataProcessor";
 import DataProcessorForRange from "./DataProcessorForRange";
 import DataProcessorForSet from "./DataProcessorForSet";
 
-function DataProcessorFactory(config: Partial<Configuration>): DataProcessor {
+function DataProcessorFactory(config: Partial<Config>): DataProcessorForRange | DataProcessorForSet {
   const type = config.type;
   switch (type) {
     case "range": {

@@ -1,5 +1,5 @@
 import { ALPHABET } from 'common/constants/Constants';
-import { Config, NonBottomValue, primitive } from 'common/types/Types';
+import { Config, NonBottomValue, primitive, Point } from 'common/types/Types';
 
 import DataProcessor from './DataProcessor';
 
@@ -49,18 +49,6 @@ class DataProcessorForSet extends DataProcessor<keysForConfig> {
     return false;
   }
 
-  public getView(index: number): NonNullable<primitive> {
-    const item = this._set[index];
-    if (
-      typeof item === 'object'
-      || typeof item === 'function'
-    ) {
-      return item.toString();
-    }
-
-    return item;
-  }
-
   public setStep(step: number): boolean {
     if (Number.isInteger(step)) {
       return super.setStep(step);
@@ -75,6 +63,23 @@ class DataProcessorForSet extends DataProcessor<keysForConfig> {
     }
 
     return false;
+  }
+
+  public createPoints(values: Array<number>): Array<Point> {
+    const points: Array<Point> = [];
+    values.forEach((value) => {
+      points.push(this.createPoint(value));
+    });
+    return points;
+  }
+
+  public getView(index: number): NonNullable<primitive> {
+    const item = this._set[index];
+    if (typeof item === 'object' || typeof item === 'function') {
+      return item.toString();
+    }
+
+    return item;
   }
 
   protected _isValidGridDensity(density: number, from: number, to: number): boolean {
@@ -106,9 +111,11 @@ class DataProcessorForSet extends DataProcessor<keysForConfig> {
     } = config;
 
     this._pp.setBoundaries(min, max);
-    this._points = this.createPoints([min, ...values, max]);
-    this._intervals = this.createIntervals(this._points);
-    this._set = [...set]; // TODO: Need deep clone or enough shallow copy?
+    this._set = [...set]; // Shallow copy
+    this._minBoundary.value = min;
+    this._maxBoundary.value = max;
+    this._points = this.createPoints(values);
+    this._intervals = this.createIntervals([this._minBoundary, ...this._points, this._maxBoundary]);
     this._step = step;
   }
 

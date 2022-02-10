@@ -12,7 +12,7 @@ class PercentageProcessorFixed extends PercentageProcessor {
   private _max: number;
   private _ratio: number;
 
-  constructor (config: { mm: MathModule, min?: number, max?: number }) {
+  constructor (config: { mm?: MathModule, min?: number, max?: number } = {}) {
     const {
       mm,
       min,
@@ -41,7 +41,6 @@ class PercentageProcessorFixed extends PercentageProcessor {
       return true;
     }
 
-    console.warn('A min or max is not valid');
     return false;
   }
 
