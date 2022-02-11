@@ -4,7 +4,7 @@ import { Config, direction, Point, Interval, primitive, PointState, IntervalStat
 import PercentageProcessorFixed from "./PercentageProcessorFixed";
 import MathModule from "./MathModule";
 
-abstract class DataProcessor<K extends keyof Config> {
+abstract class ScaleProcessor<K extends keyof Config> {
   protected _mm: MathModule;
   protected _pp: PercentageProcessorFixed;
   protected _minBoundary: Point;
@@ -86,7 +86,7 @@ abstract class DataProcessor<K extends keyof Config> {
 
   public setMinBoundary(min: number): boolean {
     const maxStepSize = this._mm.sub(this.max, min);
-    const firstPointValue = this._getPoint(0).value;
+    const firstPointValue = this._getPointUnsafe(0).value;
     const isMatchRightBoundary = this._mm.sub(firstPointValue, min) >= 0;
     if (
       min < this.max
@@ -103,7 +103,7 @@ abstract class DataProcessor<K extends keyof Config> {
 
   public setMaxBoundary(max: number): boolean {
     const maxStepSize = this._mm.sub(max, this.min);
-    const lastPointValue = this._getPoint(this.lastPointIndex).value;
+    const lastPointValue = this._getPointUnsafe(this.lastPointIndex).value;
     const isMatchLeftBoundary = this._mm.sub(max, lastPointValue) >= 0;
     if (
       this.min < max
@@ -139,6 +139,21 @@ abstract class DataProcessor<K extends keyof Config> {
     return false;
   }
 
+  public setPoints(values: Array<number>): boolean {
+    if (values.length < this.numberOfPoints) {
+      return false;
+    }
+
+    try {
+      const valuesSlice = values.slice(0, this.lastPointIndex + 1);
+      this._isValidPointValues([this.min, ...valuesSlice, this.max])
+      valuesSlice.forEach((val, i) => this._setPointUnsafe(val, i));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   public movePoint(offset: number, index: number): boolean {
     if (!this._isValidPointIndex(index)) {
       return false;
@@ -161,22 +176,8 @@ abstract class DataProcessor<K extends keyof Config> {
     return this.movePoint(index, offset);
   }
 
-  public setPoints(values: Array<number>): boolean {
-    if (values.length < this.numberOfPoints) {
-      return false;
-    }
-
-    try {
-      this._isValidPointValues([this.min, ...values, this.max])
-      values.forEach((val, i) => this._setPointUnsafe(val, i));
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   getIntervalState(index: number): IntervalState {
-    const { value, percent } = this._getInterval(index);
+    const { value = 0, percent = 0 } = this._getIntervalUnsafe(index);
     return {
       value,
       percent,
@@ -184,7 +185,7 @@ abstract class DataProcessor<K extends keyof Config> {
   }
 
   getPointState(index: number): PointState {
-    const { value, percent } = this._getPoint(index);
+    const { value = 0, percent = 0 } = this._getPointUnsafe(index);
     return {
       value,
       percent,
@@ -244,7 +245,7 @@ abstract class DataProcessor<K extends keyof Config> {
 
     const point = this.createPoint(value);
     this._points.splice(insertPosition, 0, point);
-    const { from: leftBoundary, to: rightBoundary } = this._getInterval(insertPosition);
+    const { from: leftBoundary, to: rightBoundary } = this._getIntervalUnsafe(insertPosition);
     this._setIntervalUnsafe(leftBoundary, point, insertPosition);
     const interval = this.createInterval(point, rightBoundary);
     this._intervals.splice(insertPosition + 1, 0, interval);
@@ -267,7 +268,7 @@ abstract class DataProcessor<K extends keyof Config> {
     return false;
   }
 
-  public getGrid(density: number, from?: number, to?: number): Array<Point> {
+  public getGrid(density: number, from?: number, to?: number): Array<PointState> {
     const fromGridValue = (from !== undefined) ? from : this.min;
     const toGridValue = (to !== undefined) ? to : this.max;
     if (
@@ -280,10 +281,10 @@ abstract class DataProcessor<K extends keyof Config> {
     const grid = [];
     let value = fromGridValue;
     while (value < toGridValue) {
-      grid.push(this.createPoint(value));
+      grid.push(this._createGridPoint(value));
       value = this._mm.add(value, density);
     }
-    grid.push(this.createPoint(toGridValue));
+    grid.push(this._createGridPoint(toGridValue));
     return grid;
   }
 
@@ -291,8 +292,16 @@ abstract class DataProcessor<K extends keyof Config> {
     return this._step;
   }
 
+  protected _createGridPoint(value: number): PointState {
+    return {
+      value,
+      percent: this._pp.reflectOnScale(value),
+      view: this._getView(value),
+    }
+  }
+
   protected _getPointValue(index: number): number {
-    return this._getPoint(index).value;
+    return this._getPointUnsafe(index).value;
   }
 
   protected _getView(val: number): NonNullable<primitive> {
@@ -314,18 +323,18 @@ abstract class DataProcessor<K extends keyof Config> {
 
   protected _setMinBoundaryUnsafe(val: number): void {
     this._minBoundary.value = val;
-    const rightBoundary = this._getPoint(0);
+    const rightBoundary = this._getPointUnsafe(0);
     this._setIntervalUnsafe(this._minBoundary, rightBoundary, 0);
   }
 
   protected _setMaxBoundaryUnsafe(val: number): void {
     this._maxBoundary.value = val;
-    const leftBoundary = this._getPoint(this.lastPointIndex);
+    const leftBoundary = this._getPointUnsafe(this.lastPointIndex);
     this._setIntervalUnsafe(leftBoundary, this._maxBoundary, this.lastPointIndex);
   }
 
   protected _setPointUnsafe(val: number, index: number): void {
-    const point = this._getPoint(index);
+    const point = this._getPointUnsafe(index);
     point.value = val;
     point.percent = this._pp.reflectOnScale(val);
     const leftBoundary = this._getLeftBoundary(index);
@@ -335,7 +344,7 @@ abstract class DataProcessor<K extends keyof Config> {
   }
 
   protected _setIntervalUnsafe(from: Point, to: Point, index: number): void {
-    const interval = this._getInterval(index);
+    const interval = this._getIntervalUnsafe(index);
     interval.from = from;
     interval.to = to;
     const value = this._getDistanceBetweenPoints(from, to);
@@ -343,7 +352,7 @@ abstract class DataProcessor<K extends keyof Config> {
     interval.percent = this._pp.convertToPercent(value);
   }
 
-  protected _getInterval(index: number): Interval {
+  protected _getIntervalUnsafe(index: number): Interval {
     return this._intervals[index];
   }
 
@@ -356,7 +365,7 @@ abstract class DataProcessor<K extends keyof Config> {
   }
 
   protected _getDistanceToBoundary(index: number, direction: direction): number {
-    const point = this._getPoint(index);
+    const point = this._getPointUnsafe(index);
     const boundary = this._getBoundary(index, direction);
     return this._getDistanceBetweenPoints(point, boundary);
   }
@@ -384,10 +393,10 @@ abstract class DataProcessor<K extends keyof Config> {
       return this._maxBoundary;
     }
 
-    return this._getPoint(index + direction);
+    return this._getPointUnsafe(index + direction);
   }
 
-  protected _getPoint(index: number): Point {
+  protected _getPointUnsafe(index: number): Point {
     return this._points[index];
   }
 
@@ -490,7 +499,7 @@ abstract class DataProcessor<K extends keyof Config> {
   }
 
   protected _isMatchIntervalBoundaries(val: number, index: number): boolean {
-    const { from, to } = this._getInterval(index);
+    const { from, to } = this._getIntervalUnsafe(index);
     return (
       from.value <= val
       && val <= to.value
@@ -565,4 +574,4 @@ abstract class DataProcessor<K extends keyof Config> {
   }
 }
 
-export default DataProcessor;
+export default ScaleProcessor;

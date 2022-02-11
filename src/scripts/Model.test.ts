@@ -1,5 +1,5 @@
 import { ALPHABET } from 'common/constants/Constants';
-import { Configuration } from 'common/types/Types';
+import { PointState, primitive, ScaleState } from 'common/types/Types';
 
 import Model from './Model';
 import Observer from './Observer';
@@ -8,408 +8,236 @@ class ObserverMock extends Observer {
   update() {};
 }
 
-describe("Testing 'Model' for range type configuration:\n", () => {
-  const points: Array<number> = [1, 2.5, 5, 10];
-  const config: Partial<Configuration> = {
+function getGridValues(grid: Array<PointState>): Array<number> {
+  return grid.map((point) => point.value);
+}
+
+function getGridPercent(grid: Array<PointState>): Array<number> {
+  return grid.map((point) => point.percent);
+}
+
+function getPointValues(scaleState: ScaleState): Array<number> {
+  return scaleState.points.map((point) => point.value);
+}
+
+function getPointPercents(scaleState: ScaleState): Array<number> {
+  return scaleState.points.map((point) => point.percent);
+}
+
+function getPointViews(scaleState: ScaleState): Array<NonNullable<primitive>> {
+  return scaleState.points.map((point) => point.view);
+}
+
+function getIntervalValues(scaleState: ScaleState): Array<number> {
+  return scaleState.intervals.map((interval) => interval.value);
+}
+
+function getIntervalPercents(scaleState: ScaleState): Array<number> {
+  return scaleState.intervals.map((interval) => interval.percent);
+}
+
+describe("Testing 'Model':\n", () => {
+  const values = [0, 5, 10];
+  const percents = [0, 50, 100];
+  const views = ["0", "5", "10"];
+  const intervalValues = [0, 5, 5, 0];
+  const intervalPercents = [0, 50, 50, 0];
+  const step = 5;
+  const min = 0;
+  const max = 10;
+  const config = {
     type: 'range',
-    range: [0, 10],
-    step: 2,
-    points,
+    range: [min, max],
+    step,
+    values,
   };
-  const model = new Model(config);
-  const observer = new ObserverMock();
-  const observerUpdateSpy = jest.spyOn(observer, 'update');
-  model.attach(observer);
+  let model = new Model(config);
 
-  it("The 'getPointValue' method should return the point value", () => {
-    points.forEach((val, i) => {
-      expect(model.getPointValue(i)).toStrictEqual(val);
+  beforeEach(() => {
+    model = new Model(config);
+  });
+
+  it("Testing 'getPointState' method", () => {
+    values.forEach((val, i) => {
+      const point = model.getPointState(i);
+      expect(point.value).toStrictEqual(val);
+      expect(point.percent).toStrictEqual(percents[i]);
+      expect(point.view).toStrictEqual(views[i]);
     });
   });
 
-  it("The 'getPointValues' method should return an array of all point values", () => {
-    expect(model.getPointValues()).toStrictEqual(points);
-  });
-
-  const pointScale = [10, 25, 50, 100];
-  it("The 'getPointLocationOnScale' method should return the point value as a percentage", () => {
-    points.forEach((_, i) => {
-      expect(model.getPointLocationOnScale(i)).toStrictEqual(pointScale[i]);
+  it("Testing 'getIntervalState' method", () => {
+    intervalValues.forEach((val, i) => {
+      const interval = model.getIntervalState(i);
+      expect(interval.value).toStrictEqual(val);
+      expect(interval.percent).toStrictEqual(intervalPercents[i]);
     });
   });
 
-  it("The 'getPointScale' method should return an array of all points values as a percentage", () => {
-    expect(model.getPointScale()).toStrictEqual(pointScale);
+  it("Testing 'getScaleState' method", () => {
+    const scaleState = model.getScaleState();
+    expect(getPointValues(scaleState)).toStrictEqual(values);
+    expect(getPointPercents(scaleState)).toStrictEqual(percents);
+    expect(getPointViews(scaleState)).toStrictEqual(views);
+    expect(getIntervalValues(scaleState)).toStrictEqual(intervalValues);
+    expect(getIntervalPercents(scaleState)).toStrictEqual(intervalPercents);
+    expect(scaleState.step).toStrictEqual(step);
+    expect(scaleState.min.value).toStrictEqual(min);
+    expect(scaleState.min.percent).toStrictEqual(0);
+    expect(scaleState.max.value).toStrictEqual(max);
+    expect(scaleState.max.percent).toStrictEqual(100);
   });
 
-  const distances = [1, 1.5, 2.5, 5, 0];
-  it("The 'getDistanceToBorders' method should return the distance from point to borders", () => {
-    points.forEach((_, i) => {
-      expect(model.getDistanceToBorders(i)).toStrictEqual(distances.slice(i, i + 2));
-    });
-  });
-
-  it("The 'getDistances' method should return all distances between points (include min and max)", () => {
-    expect(model.getDistances()).toStrictEqual(distances);
-  });
-
-  describe("Testing the 'setPoint' method:\n", () => {
-    it("Should return false when point value isn't within the borders", () => {
-      expect(model.setPointValue(0, -1)).toBeFalsy();
-      expect(model.setPointValue(0, 3)).toBeFalsy();
-      expect(model.setPointValue(3, 4)).toBeFalsy();
-      expect(model.setPointValue(3, 11)).toBeFalsy();
-    });
-
-    it("Should set point and return true when point value is within the borders", () => {
-      expect(model.setPointValue(0, 2)).toBeTruthy();
-      expect(model.getPointValue(0)).toStrictEqual(2);
-      expect(observerUpdateSpy).toBeCalledTimes(1);
-      model.resetStateToInitial();
-    });
-  });
-
-  describe("Testing the 'setPoints' method:\n", () => {
-    const incorrectPointValues = [
-      [1, 2, 3],
-      [1, 9, 8, 10],
-      [-1, 0, 5, 10],
-      [0, 5, 10, 15],
-    ];
-    it("Should set correct point values", () => {
-      incorrectPointValues.forEach((points) => {
-        expect(model.setPoints(points)).toBeFalsy();
+  describe("Testing 'getGrid' methods:\n", () => {
+    describe("For range:\n", () => {
+      const config = {
+        type: 'range',
+        range: [0, 1],
+        step: 0.5,
+        values: [0],
+      };
+      const model = new Model(config);
+  
+      [
+        { density: -0.1, values: [], percents: [] },
+        { density: 0, values: [], percents: [] },
+        { density: 0.25, values: [0, 0.25, 0.5, 0.75, 1], percents: [0, 25, 50, 75, 100] },
+        { density: 0.5, values: [0, 0.5, 1], percents: [0, 50, 100] },
+        { density: 1, values: [0, 1], percents: [0, 100] },
+        { density: 1.5, values: [0, 1], percents: [0, 100] },
+      ].forEach(({ density, values, percents }) => {
+        it(`For density: ${density} should return values: \[${values}\] and percents: \[${percents}\]`, () => {
+          const grid = model.getGrid(density);
+          expect(getGridValues(grid)).toStrictEqual(values);
+          expect(getGridPercent(grid)).toStrictEqual(percents);
+        });
       });
-      model.resetStateToInitial();
+  
+      [
+        { from: 0, to: 0, values: [], percents: [] },
+        { from: 0.8, to: 0.2, values: [], percents: [] },
+        { from: -1, to: 0, values: [], percents: [] },
+        { from: 0.5, to: undefined, values: [0.5, 0.75, 1], percents: [50, 75, 100] },
+        { from: undefined, to: 0.5, values: [0, 0.25, 0.5], percents: [0, 25, 50] },
+        { from: 0.25, to: 0.75, values: [0.25, 0.5, 0.75], percents: [25, 50, 75] },
+      ].forEach(({ from, to, values, percents }) => {
+        it(`For density: 0.25, from: ${from}, to: ${to} should return values: \[${values}\] and percents: \[${percents}\]`, () => {
+          const density = 0.25;
+          const grid = model.getGrid(density, from, to);
+          expect(getGridValues(grid)).toStrictEqual(values);
+          expect(getGridPercent(grid)).toStrictEqual(percents);
+        });
+      });
+    });
+  
+    describe("For set:\n", () => {
+      const config = {
+        type: 'set',
+        set: [...ALPHABET],
+        min: 0,
+        max: ALPHABET.length - 1,
+        step: 1,
+        values: [0],
+      };
+      const model = new Model(config);
+  
+      [
+        { density: -1, values: [], percents: [] },
+        { density: 0, values: [], percents: [] },
+        { density: 0.1, values: [], percents: [] },
+        { density: 10, values: [0, 10, 20, 25], percents: [0, 40, 80, 100] },
+      ].forEach(({ density, values, percents }) => {
+        it(`For density: ${density} should return values: \[${values}\] and percents: \[${percents}\]`, () => {
+          const grid = model.getGrid(density);
+          expect(getGridValues(grid)).toStrictEqual(values);
+          expect(getGridPercent(grid)).toStrictEqual(percents);
+        });
+      });
+  
+      [
+        { from: 0, to: 0, values: [], percents: [] },
+        { from: 20, to: 10, values: [], percents: [] },
+        { from: -1, to: 0, values: [], percents: [] },
+        { from: 1.1, to: 2, values: [], percents: [] },
+        { from: 1, to: 2.1, values: [], percents: [] },
+        { from: 20, to: undefined, values: [20, 25], percents: [80, 100] },
+        { from: undefined, to: 10, values: [0, 10], percents: [0, 40] },
+        { from: 5, to: 20, values: [5, 15, 20], percents: [20, 60, 80] },
+      ].forEach(({ from, to, values, percents }) => {
+        it(`For density: 10, from: ${from}, to: ${to} should return values: \[${values}\] and percents: \[${percents}\]`, () => {
+          const density = 10;
+          const grid = model.getGrid(density, from, to);
+          expect(getGridValues(grid)).toStrictEqual(values);
+          expect(getGridPercent(grid)).toStrictEqual(percents);
+        });
+      });
+    });
+  });
+
+  describe("Testing methods changing the state of the scale:\n", () => {
+    const observer = new ObserverMock();
+    const observerUpdateSpy = jest.spyOn(observer, 'update');
+
+    beforeEach(() => {
+      model = new Model(config);
+      model.attach(observer);
     });
 
-    const correctPointValues = [
-      [1, 2, 3, 4],
-      [1, 2, 3, 4, 5],
-    ];
-    it("Should set correct point values and return true", () => {
-      correctPointValues.forEach((points) => {
-        expect(model.setPoints(points)).toBeTruthy();
+    it("Testing 'setPoint' method", () => {
+      expect(model.setPoint(-1, 0)).toBeFalsy();
+      expect(model.setPoint(3, 0)).toBeTruthy();
+      expect(model.getPointState(0).value).toStrictEqual(3);
+      expect(observerUpdateSpy).toBeCalledTimes(1);
+    });
+
+    it("Testing 'setStep' method", () => {
+      expect(model.setStep(max - min + 1)).toBeFalsy();
+      expect(model.setStep(-1)).toBeFalsy();
+      expect(model.setStep(0)).toBeFalsy();
+      expect(model.setStep(5)).toBeTruthy();
+      expect(model.getScaleState().step).toStrictEqual(5);
+      expect(observerUpdateSpy).toBeCalledTimes(1);
+    });
+
+    it("Testing 'setPoints' method", () => {
+      const incorrectPointValues = [
+        [0],
+        [0, 5],
+        [0, 6, 5],
+        [-1, 1, 2],
+      ];
+      incorrectPointValues.forEach((values) => {
+        expect(model.setPoints(values)).toBeFalsy();
+      });
+
+      const correctPointValues = [
+        [1, 2, 3],
+        [1, 2, 3, 4],
+      ];
+      correctPointValues.forEach((values) => {
+        expect(model.setPoints(values)).toBeTruthy();
+        const pointValues = getPointValues(model.getScaleState());
+        expect(pointValues).toStrictEqual(correctPointValues[0]);
       });
       expect(observerUpdateSpy).toBeCalledTimes(2);
-      model.resetStateToInitial();
-    });
-  });
-
-  describe("Testing the 'setMinBorder' method:\n", () => {
-    it("Should return false when value not finite", () => {
-      expect(model.setMinBorder(-Infinity)).toBeFalsy();
-      expect(model.setMinBorder(NaN)).toBeFalsy();
     });
 
-    it("Should return false when value greater than the first point value", () => {
-      expect(model.setMinBorder(2.6)).toBeFalsy();
-    });
-
-    it("Should return false when value equal to maxBorder value", () => {
-      model.setPointValue(2, 10);
-      model.setPointValue(1, 10);
-      model.setPointValue(0, 10);
-      expect(model.setMinBorder(10)).toBeFalsy();
-      model.resetStateToInitial();
-    });
-
-    it("Should set min border and return true when value is within the borders", () => {
-      expect(model.setMinBorder(1)).toBeTruthy();
-      expect(model.getMinBorder()).toStrictEqual(1);
+    it("Testing 'setMinBoundary' method", () => {
+      const incorrectMinValue = max;
+      expect(model.setMinBoundary(incorrectMinValue)).toBeFalsy();
+      const correctMinValue = min - 1;
+      expect(model.setMinBoundary(correctMinValue)).toBeTruthy();
+      expect(model.getScaleState().min.value).toStrictEqual(correctMinValue);
       expect(observerUpdateSpy).toBeCalledTimes(1);
-      model.resetStateToInitial();
-    });
-  });
-
-  describe("Testing the 'setMaxBorder' method:\n", () => {
-    it("Should return false when value not finite", () => {
-      expect(model.setMaxBorder(Infinity)).toBeFalsy();
-      expect(model.setMaxBorder(NaN)).toBeFalsy();
     });
 
-    it("Should return false when value equal to minBorder value", () => {
-      model.setPointValue(0, 0);
-      model.setPointValue(1, 0);
-      model.setPointValue(2, 0);
-      model.setPointValue(3, 0);
-      expect(model.setMaxBorder(0)).toBeFalsy();
-      model.resetStateToInitial();
-    });
-
-    it("Should set max border and return true when value is within the borders", () => {
-      expect(model.setMaxBorder(15)).toBeTruthy();
-      expect(model.getMaxBorder()).toStrictEqual(15);
+    it("Testing 'setMaxBoundary' method", () => {
+      const incorrectMaxValue = min;
+      expect(model.setMaxBoundary(incorrectMaxValue)).toBeFalsy();
+      const correctMaxValue = max + 1;
+      expect(model.setMaxBoundary(correctMaxValue)).toBeTruthy();
+      expect(model.getScaleState().max.value).toStrictEqual(correctMaxValue);
       expect(observerUpdateSpy).toBeCalledTimes(1);
-      model.resetStateToInitial();
-    });
-  });
-
-  describe("Testing the 'setStep' method:\n", () => {
-    it("Should return false when value greater than the range length", () => {
-      const rangeLength = 10;
-      expect(model.setStep(rangeLength + 0.001)).toBeFalsy();
-    });
-
-    it("Should return false when value is zero", () => {
-      expect(model.setStep(0)).toBeFalsy();
-    });
-
-    it("Should return false when value is negative", () => {
-      expect(model.setStep(-1)).toBeFalsy();
-    });
-
-    it("Should set step and return true when value is within the borders", () => {
-      expect(model.setStep(5)).toBeTruthy();
-      expect(model.getStep()).toStrictEqual(5);
-      expect(observerUpdateSpy).toBeCalledTimes(1);
-      model.resetStateToInitial();
-    });
-  });
-});
-
-describe("Testing 'Model' for set type configuration:\n", () => {
-  const points = [5, 10, 15];
-  const config: Partial<Configuration> = {
-    type: 'set',
-    set: [...ALPHABET],
-    step: 1,
-    points,
-  };
-  const model = new Model(config);
-  const observer = new ObserverMock();
-  const observerUpdateSpy = jest.spyOn(observer, 'update');
-  model.attach(observer);
-
-  it("The 'getPointValue' method should return the point value", () => {
-    points.forEach((val, i) => {
-      expect(model.getPointValue(i)).toStrictEqual(val);
-    });
-  });
-
-  it("The 'getPointValues' method should return an array of all point values", () => {
-    expect(model.getPointValues()).toStrictEqual(points);
-  });
-
-  const pointScale = [20, 40, 60];
-  it("The 'getPointLocationOnScale' method should return the point value as a percentage", () => {
-    points.forEach((_, i) => {
-      expect(model.getPointLocationOnScale(i)).toStrictEqual(pointScale[i]);
-    });
-  });
-
-  it("The 'getPointScale' method should return an array of all point values as a percentage", () => {
-    expect(model.getPointScale()).toStrictEqual(pointScale);
-  });
-
-  const distances = [5, 5, 5, 10];
-  it("The 'getDistanceToBorders' method should return the distance from point to borders", () => {
-    points.forEach((_, i) => {
-      expect(model.getDistanceToBorders(i)).toStrictEqual(distances.slice(i, i + 2));
-    });
-  });
-
-  it("The 'getDistances' method should return all distances between points (include min and max)", () => {
-    expect(model.getDistances()).toStrictEqual(distances);
-  });
-
-  describe("Testing the 'setPoint' method:\n", () => {
-    it("Should return false when point value isn't within the borders", () => {
-      expect(model.setPointValue(0, -1)).toBeFalsy();
-      expect(model.setPointValue(0, 11)).toBeFalsy();
-      expect(model.setPointValue(2, 26)).toBeFalsy();
-      expect(model.setPointValue(2, 9)).toBeFalsy();
-    });
-
-    it("Should set point and return true when point value is within the borders", () => {
-      expect(model.setPointValue(0, 6)).toBeTruthy();
-      expect(model.getPointValue(0)).toStrictEqual(6);
-      expect(observerUpdateSpy).toBeCalledTimes(1);
-      model.resetStateToInitial();
-    });
-
-    model.resetStateToInitial();
-  });
-
-  describe("Testing the 'setMinBorder' method:\n", () => {
-    it("Should return false when value less than the first set index", () => {
-      expect(model.setMinBorder(-1)).toBeFalsy();
-    });
-
-    it("Should return false when value greater than the first point value", () => {
-      expect(model.setMinBorder(6)).toBeFalsy();
-    });
-
-    it("Should return false when value equal to maxBorder value", () => {
-      model.setPointValue(2, 25);
-      model.setPointValue(1, 25);
-      model.setPointValue(0, 25);
-      expect(model.setMinBorder(25)).toBeFalsy();
-      model.resetStateToInitial();
-    });
-
-    it("Should set minBorder and return true when value is within the borders", () => {
-      expect(model.setMinBorder(5)).toBeTruthy();
-      expect(model.getMinBorder()).toStrictEqual(5);
-      expect(observerUpdateSpy).toBeCalledTimes(1);
-      model.resetStateToInitial();
-    });
-  });
-
-  describe("Testing the 'setMaxBorder' method:\n", () => {
-    it("Should return false when value greater than the last set index", () => {
-      expect(model.setMaxBorder(26)).toBeFalsy();
-    });
-
-    it("Should return false when value less than the last point value", () => {
-      expect(model.setMaxBorder(14)).toBeFalsy();
-    });
-
-    it("Should return false when value equal to minBorder value", () => {
-      model.setPointValue(0, 0);
-      model.setPointValue(1, 0);
-      model.setPointValue(2, 0);
-      expect(model.setMaxBorder(0)).toBeFalsy();
-      model.resetStateToInitial();
-    });
-
-    it("Should set minBorder and return true when value is within the borders", () => {
-      expect(model.setMaxBorder(20)).toBeTruthy();
-      expect(model.getMaxBorder()).toStrictEqual(20);
-      expect(observerUpdateSpy).toBeCalledTimes(1);
-      model.resetStateToInitial();
-    });
-  });
-
-  describe("Testing the 'setStep' method:\n", () => {
-    it("Should return false when value greater than the number of elements in the set", () => {
-      expect(model.setStep(ALPHABET.length)).toBeFalsy();
-    });
-
-    it("Should return false when value is zero", () => {
-      expect(model.setStep(0)).toBeFalsy();
-    });
-
-    it("Should return false when value is negative", () => {
-      expect(model.setStep(-1)).toBeFalsy();
-    });
-
-    it("Should return false when value not integer", () => {
-      expect(model.setStep(1.1)).toBeFalsy();
-    });
-
-    it("Should set step and return true when value is within the borders", () => {
-      expect(model.setStep(20)).toBeTruthy();
-      expect(model.getStep()).toStrictEqual(20);
-      expect(observerUpdateSpy).toBeCalledTimes(1);
-      model.resetStateToInitial();
-    });
-  });
-});
-
-describe("Testing methods for working with a grid:\n", () => {
-  describe("for range:\n", () => {
-    const config: Partial<Configuration> = {
-      type: 'range',
-      range: [0, 1],
-      step: 0.1,
-      points: [0],
-    };
-    const model = new Model(config);
-
-    it("if (density <= 0) then 'getPositionGrid' return [minBorder, maxBorder]", () => {
-      const density = -0.1;
-      expect(model.getPositionGrid(density)).toStrictEqual([0, 1]);
-    });
-
-    it("if (density <= 0) then 'getPercentageGrid' return [minBorder, maxBorder]", () => {
-      const density = -0.1;
-      expect(model.getPercentageGrid(density)).toStrictEqual([0, 100]);
-    });
-
-    it("if (density <= 0) then 'getValueGrid' return [minBorder, maxBorder]", () => {
-      const density = -0.1;
-      expect(model.getValueGrid(density)).toStrictEqual([0, 1]);
-    });
-
-    it("Test the 'getValueGrid' and 'getPositionGrid' method", () => {
-      [
-        { density: 0.5, expectedGrid: [0, 0.5, 1] },
-        { density: 0.8, expectedGrid: [0, 0.8, 1] },
-        { density: 1 , expectedGrid: [0, 1] },
-      ].forEach(({ density, expectedGrid }) => {
-        expect(model.getPositionGrid(density)).toStrictEqual(expectedGrid);
-        expect(model.getValueGrid(density)).toStrictEqual(expectedGrid);
-      });
-    });
-
-    it("Test the 'getPercentageGrid' method", () => {
-      [
-        { density: 0.5, expectedGrid: [0, 50, 100] },
-        { density: 0.8, expectedGrid: [0, 80, 100] },
-        { density: 1, expectedGrid: [0, 100] },
-      ].forEach(({ density, expectedGrid }) => {
-        expect(model.getPercentageGrid(density)).toStrictEqual(expectedGrid);
-      });
-    });
-  });
-
-  describe("for set:\n", () => {
-    const config: Partial<Configuration> = {
-      type: 'set',
-      set: [...ALPHABET],
-      min: 0,
-      max: 25,
-      step: 1,
-      points: [0],
-    };
-    const model = new Model(config);
-
-    it("if (density <= 0) OR (density not integer) then 'getPositionGrid' return [minBorder, maxBorder]", () => {
-      [-1, 0, 0.1].forEach((density) => {
-        expect(model.getPositionGrid(density)).toStrictEqual([0, 25]);
-      });
-    });
-
-    it("if (density <= 0) OR (density not integer) then 'getPercentageGrid' return [minBorder, maxBorder]", () => {
-      [-1, 0, 0.1].forEach((density) => {
-        expect(model.getPercentageGrid(density)).toStrictEqual([0, 100]);
-      });
-    });
-
-    it("if (density <= 0) OR (density not integer) then 'getValueGrid' return [minBorder, maxBorder]", () => {
-      [-1, 0, 0.1].forEach((density) => {
-        expect(model.getValueGrid(density)).toStrictEqual(['a', 'z']);
-      });
-    });
-
-    it("Test the 'getPositionGrid' method", () => {
-      [
-        { density: 1, expectedGrid: Array(26).fill(null).map((_, i) => i) },
-        { density: 10, expectedGrid: [0, 10, 20, 25] },
-        { density: 30, expectedGrid: [0, 25] },
-      ].forEach(({ density, expectedGrid }) => {
-        expect(model.getPositionGrid(density)).toStrictEqual(expectedGrid);
-      });
-    });
-
-    it("Test the 'getValueGrid' method", () => {
-      [
-        { density: 1,  expectedGrid: [...ALPHABET] },
-        { density: 10, expectedGrid: [ALPHABET[0], ALPHABET[10], ALPHABET[20], ALPHABET[25]] },
-        { density: 30, expectedGrid: [ALPHABET[0], ALPHABET[25]] },
-      ].forEach(({ density, expectedGrid }) => {
-        expect(model.getValueGrid(density)).toStrictEqual(expectedGrid);
-      });
-    });
-
-    it("Test the 'getPercentageGrid' method", () => {
-      [
-        { density: 12, expectedGrid: [0, 48, 96, 100] },
-        { density: 30, expectedGrid: [0, 100] },
-      ].forEach(({ density, expectedGrid }) => {
-        expect(model.getPercentageGrid(density)).toStrictEqual(expectedGrid);
-      });
     });
   });
 });

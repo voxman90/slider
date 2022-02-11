@@ -1,7 +1,7 @@
 import { ALPHABET } from 'common/constants/Constants';
 import { Config, NonBottomValue, primitive, Point } from 'common/types/Types';
 
-import DataProcessor from './DataProcessor';
+import ScaleProcessor from './ScaleProcessor';
 
 type keysForConfig = 'min' | 'max' | 'step' | 'values' | 'set';
 type ConfigForSet = Pick<Config, keysForConfig>;
@@ -14,7 +14,7 @@ const defaultConfig: ConfigForSet = {
   set: [...ALPHABET],
 };
 
-class DataProcessorForSet extends DataProcessor<keysForConfig> {
+class ScaleProcessorForSet extends ScaleProcessor<keysForConfig> {
   private _set: Array<NonBottomValue>;
 
   constructor (config: Partial<Config>) {
@@ -185,4 +185,4 @@ class DataProcessorForSet extends DataProcessor<keysForConfig> {
   }
 }
 
-export default DataProcessorForSet;
+export default ScaleProcessorForSet;

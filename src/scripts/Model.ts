@@ -1,186 +1,91 @@
-import { Configuration, ModelState, PointState, primitive } from 'common/types/Types';
+import { Config, ScaleState, PointState, IntervalState, primitive } from 'common/types/Types';
 
 import Subject from './Subject';
-import DataProcessor from './DataProcessor';
-import DataProcessorFactory from './DataProcessorFactory';
+import ScaleProcessorFactory from './ScaleProcessorFactory';
+import ScaleProcessorForRange from './ScaleProcessorForRange';
+import ScaleProcessorForSet from './ScaleProcessorForSet';
 
 class Model extends Subject {
-  private _dp: DataProcessor;
+  private _scale: ScaleProcessorForRange | ScaleProcessorForSet;
 
-  constructor (config: Partial<Configuration>) {
+  constructor (config: Partial<Config>) {
     super();
-    this._dp = DataProcessorFactory(config);
+    this._scale = ScaleProcessorFactory(config);
   }
 
-  public notifyAll(): void {
+  public notifyScopePoint(index: number) {
+    this.notify({ scope: 'point', index });
+  }
+
+  public notifyScopeAll(): void {
     this.notify({ scope: 'all' });
-  }
-
-  public setPointValue(index: number, val: number): boolean {
-    const isValueSet = this._dp.setPoint(index, val);
-    if (isValueSet) {
-      this.notifyAboutPointChanges(index);
-      return true;
-    }
-
-    return false;
-  }
-
-  public setPoints(points: Array<number>): boolean {
-    const isPointsSet = this._dp.setPoints(points);
-    if (isPointsSet) {
-      this.notifyAll();
-      return true;
-    }
-
-    return false;
-  }
-
-  public setStep(step: number): boolean {
-    const isStepSet = this._dp.setStep(step);
-    if (isStepSet) {
-      this.notifyAll();
-      return true;
-    }
-
-    return false;
-  }
-
-  public setMinBorder(minBorder: number): boolean {
-    const isMinBorderSet = this._dp.setMinBorder(minBorder);
-    if (isMinBorderSet) {
-      this.notifyAll();
-      return true;
-    }
-
-    return false;
-  }
-
-  public setMaxBorder(maxBorder: number): boolean {
-    const isMaxBorderSet = this._dp.setMaxBorder(maxBorder);
-    if (isMaxBorderSet) {
-      this.notifyAll();
-      return true;
-    }
-
-    return false;
-  }
-
-  public getState(): ModelState {
-    return {
-      points: this.getPoints(),
-      min: this.getMinBorderView(),
-      max: this.getMaxBorderView(),
-      step: this.getStep(),
-    };
-  }
-
-  public getPoints(): Array<PointState> {
-    const points = [];
-    for(let i = 0; i < this._dp.lastPointIndex; i += 1) {
-      points.push(this.getPointState(i));
-    }
-    return points;
-  }
-
-  public getPointState(index: number): PointState {
-    const offset = this.getPointLocationOnScale(index);
-    const [leftIndent, rightIndent] = this.getDistanceToBordersOnScale(index);
-    const view = this.getPointView(index);
-    return {
-      offset,
-      leftIndent,
-      rightIndent,
-      view,
-    };
-  }
-
-  public getPositionGrid(density: number, from?: number, to?: number): Array<number> {
-    return this._dp.getValueSubset(density, from, to);
-  }
-
-  public getPercentageGrid(density: number, from?: number, to?: number): Array<number> {
-    return this._dp.getPercentageSubset(density, from, to);
-  }
-
-  public getValueGrid(density: number, from?: number, to?: number): Array<NonNullable<primitive>> {
-    return this._dp.getViewSubset(density, from, to);
-  }
-
-  public getPointValue(index: number): number {
-    return this._dp.getPointValue(index);
-  }
-
-  public getPointValues() {
-    return this._dp.getPointValues();
-  }
-
-  public getDistanceToBorders(index: number): Array<number> {
-    return this._dp.getDistanceToBorders(index);
-  }
-
-  public getDistanceToBordersOnScale(index: number): Array<number> {
-    return this._dp.getDistanceToBordersOnScale(index);
-  }
-
-  public getDistances() {
-    return this._dp.getDistances();
-  }
-
-  public getDistancesOnScale() {
-    return this._dp.getDistancesOnScale();
-  }
-
-  public getPointLocationOnScale(index: number): number {
-    return this._dp.getPointLocationOnScale(index);
-  }
-
-  public getPointScale() {
-    return this._dp.getPointScale();
-  }
-
-  public getPointView(index: number): NonNullable<primitive> {
-    return this._dp.getPointView(index);
-  }
-
-  public getPointsView(): Array<NonNullable<primitive>> {
-    return this._dp.getPointsView();
-  }
-
-  public getMinBorder() {
-    return this._dp.minBorder;
-  }
-
-  public getMaxBorder() {
-    return this._dp.maxBorder;
-  }
-
-  public getMinBorderView() {
-    return this._dp.getMinBorderView();
-  }
-
-  public getMaxBorderView() {
-    return this._dp.getMaxBorderView();
-  }
-
-  public getStep() {
-    return this._dp.getStep();
-  }
-
-  public resetStateToInitial() {
-    this._dp.resetCurrentStateToInitial();
-    this.notifyAll();
-  }
-
-  public notifyAboutPointChanges(index: number) {
-    const changes = { scope: 'point', index };
-    this.notify(changes);
   }
 
   public notify(changes: object) {
     this._observers.forEach((observer) => {
       observer.update(this, changes);
     });
+  }
+
+  public setPoints(values: Array<number>): boolean {
+    if (this._scale.setPoints(values)) {
+      this.notifyScopeAll();
+      return true;
+    }
+
+    return false;
+  }
+
+  public setPoint(val: number, index: number): boolean {
+    if (this._scale.setPoint(val, index)) {
+      this.notifyScopePoint(index);
+      return true;
+    }
+
+    return false;
+  }
+
+  public setStep(val: number): boolean {
+    if (this._scale.setStep(val)) {
+      this.notifyScopeAll();
+      return true;
+    }
+
+    return false;
+  }
+
+  public setMinBoundary(val: number): boolean {
+    if (this._scale.setMinBoundary(val)) {
+      this.notifyScopeAll();
+      return true;
+    }
+
+    return false;
+  }
+
+  public setMaxBoundary(val: number): boolean {
+    if (this._scale.setMaxBoundary(val)) {
+      this.notifyScopeAll();
+      return true;
+    }
+
+    return false;
+  }
+
+  public getScaleState(): ScaleState {
+    return this._scale.getScaleState();
+  }
+
+  public getIntervalState(index: number): IntervalState {
+    return this._scale.getIntervalState(index);
+  }
+
+  public getPointState(index: number): PointState {
+    return this._scale.getPointState(index);
+  }
+
+  public getGrid(density: number, from?: number, to?: number): Array<PointState> {
+    return this._scale.getGrid(density, from, to);
   }
 }
 

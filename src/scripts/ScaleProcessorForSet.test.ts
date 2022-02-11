@@ -1,12 +1,12 @@
 import { ALPHABET } from 'common/constants/Constants';
 import { Config } from 'common/types/Types';
 
-import DataProcessorForSet from './DataProcessorForSet';
+import ScaleProcessorForSet from './ScaleProcessorForSet';
 import Generator from './Generator';
 
 const consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation();
 
-describe("Test 'constructor' utility", () => {
+describe("Test 'constructor' utility:\n", () => {
   const config = {
     set: [...ALPHABET],
     min: 0,
@@ -17,7 +17,7 @@ describe("Test 'constructor' utility", () => {
   const warnMessage = (err: string) => `The configuration is not valid. Error: ${err}.\nThe default configuration will be applied.`;
   const mockConstructor = (config: Partial<Config>, err: string, extraConfigProperties: object = {}) => {
     try {
-      new DataProcessorForSet(Object.assign({}, config, extraConfigProperties));
+      new ScaleProcessorForSet(Object.assign({}, config, extraConfigProperties));
     } finally {
       expect(consoleWarnMock).toHaveBeenCalledWith(warnMessage(err));
     }
@@ -59,42 +59,42 @@ describe("Test the functionality of the methods that set the boundaries", () => 
     values: [10, 20],
     step: 1,
   };
-  let dp = new DataProcessorForSet(config);
+  let scale = new ScaleProcessorForSet(config);
 
   afterEach(() => {
-    dp = new DataProcessorForSet(config);
+    scale = new ScaleProcessorForSet(config);
   });
 
   it("Min boundary shouldn't be less than zero", () => {
-    expect(dp.setMinBoundary(-1)).toBeFalsy();
+    expect(scale.setMinBoundary(-1)).toBeFalsy();
   });
 
   it("Min boundary value should be less than or equal to the first point value", () => {
     let val = Generator.getRandomInt(0, config.values[0]);
-    expect(dp.setMinBoundary(val)).toBeTruthy();
-    expect(dp.min).toStrictEqual(val);
-    val = Generator.getRandomInt(config.values[0], config.max);
-    expect(dp.setMinBoundary(val)).toBeFalsy();
+    expect(scale.setMinBoundary(val)).toBeTruthy();
+    expect(scale.min).toStrictEqual(val);
+    val = Generator.getRandomInt(config.values[0] + 1, config.max);
+    expect(scale.setMinBoundary(val)).toBeFalsy();
   });
 
   it("Max boundary shouldn't be greater than last index of set", () => {
-    expect(dp.setMaxBoundary(config.set.length)).toBeFalsy();
+    expect(scale.setMaxBoundary(config.set.length)).toBeFalsy();
   });
 
   it("Max boundary should be greater than or equal to the last point index", () => {
-    let val = Generator.getRandomInt(0, config.values[1]);
-    expect(dp.setMaxBoundary(val)).toBeFalsy();
+    let val = Generator.getRandomInt(0, config.values[1] - 1);
+    expect(scale.setMaxBoundary(val)).toBeFalsy();
     val = Generator.getRandomInt(config.values[1], config.set.length - 1);
-    expect(dp.setMaxBoundary(val)).toBeTruthy();
-    expect(dp.max).toStrictEqual(val);
+    expect(scale.setMaxBoundary(val)).toBeTruthy();
+    expect(scale.max).toStrictEqual(val);
   });
 
-  it("The min border should be less than the max border", () => {
-    dp.removePoint(1);
-    expect(dp.setMaxBoundary(config.values[0])).toBeTruthy();
-    expect(dp.setMinBoundary(config.values[0])).toBeFalsy();
-    expect(dp.setMaxBoundary(config.set.length - 1)).toBeTruthy();
-    expect(dp.setMinBoundary(config.values[0])).toBeTruthy();
-    expect(dp.setMaxBoundary(config.values[0])).toBeFalsy();
+  it("Min boundary should be less than the max border", () => {
+    scale.removePoint(1);
+    expect(scale.setMaxBoundary(config.values[0])).toBeTruthy();
+    expect(scale.setMinBoundary(config.values[0])).toBeFalsy();
+    expect(scale.setMaxBoundary(config.set.length - 1)).toBeTruthy();
+    expect(scale.setMinBoundary(config.values[0])).toBeTruthy();
+    expect(scale.setMaxBoundary(config.values[0])).toBeFalsy();
   });
 });

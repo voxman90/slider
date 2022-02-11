@@ -1,6 +1,6 @@
 import { Config } from "common/types/Types";
 
-import DataProcessor from './DataProcessor';
+import ScaleProcessor from './ScaleProcessor';
 
 type keysForConfig = 'min' | 'max' | 'step' | 'values';
 type ConfigForRange = Pick<Config, keysForConfig> & { range?: [number, number] };
@@ -12,7 +12,7 @@ const defaultConfig: ConfigForRange = {
   values: [50],
 };
 
-class DataProcessorForRange extends DataProcessor<keysForConfig> {
+class ScaleProcessorForRange extends ScaleProcessor<keysForConfig> {
   constructor (config: Partial<Config>) {
     super();
     this._init(config, defaultConfig);
@@ -135,4 +135,4 @@ class DataProcessorForRange extends DataProcessor<keysForConfig> {
   }
 }
 
-export default DataProcessorForRange;
+export default ScaleProcessorForRange;

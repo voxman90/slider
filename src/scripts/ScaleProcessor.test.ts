@@ -1,34 +1,34 @@
 import { ALPHABET } from "common/constants/Constants";
 import { Config } from "common/types/Types";
 
-import DataProcessorForRange from "./DataProcessorForRange";
-import DataProcessorForSet from "./DataProcessorForSet";
-import DataProcessorFactory from "./DataProcessorFactory";
+import ScaleProcessorForRange from "./ScaleProcessorForRange";
+import ScaleProcessorForSet from "./ScaleProcessorForSet";
+import ScaleProcessorFactory from "./ScaleProcessorFactory";
 import Generator from "./Generator";
 import MathModule from "./MathModule";
 
 const mm = new MathModule();
 
-const initDataProcessor = (config: Partial<Config>, extraConfigProperties: object = {}) => {
-  return DataProcessorFactory(Object.assign({}, config, extraConfigProperties));
+const initScaleProcessor = (config: Partial<Config>, extraConfigProperties: object = {}) => {
+  return ScaleProcessorFactory(Object.assign({}, config, extraConfigProperties));
 }
 
-function isValidPercentageAmount(dp: DataProcessorForSet | DataProcessorForRange): boolean {
-  const { intervals } = dp.getScaleState();
+function isValidPercentageAmount(scale: ScaleProcessorForSet | ScaleProcessorForRange): boolean {
+  const { intervals } = scale.getScaleState();
   let percentSum = 0;
   intervals.forEach((interval) => percentSum = mm.add(percentSum, interval.percent));
   return percentSum === 100;
 }
 
-function getPointValues(dp: DataProcessorForSet | DataProcessorForRange): number[] {
-  const { points } = dp.getScaleState();
+function getPointValues(scale: ScaleProcessorForSet | ScaleProcessorForRange): number[] {
+  const { points } = scale.getScaleState();
   return points.map((point) => point.value);
 }
 
-function testMovePoint(args: Array<[offset: number, index: number, targetValue: number]>, dp: DataProcessorForRange | DataProcessorForSet): void {
+function testMovePoint(args: Array<[offset: number, index: number, targetValue: number]>, scale: ScaleProcessorForRange | ScaleProcessorForSet): void {
   args.forEach(([offset, index, targetValue]) => {
-    expect(dp.movePoint(offset, index)).toBeTruthy();
-    expect(dp.getPointState(index).value).toStrictEqual(targetValue);
+    expect(scale.movePoint(offset, index)).toBeTruthy();
+    expect(scale.getPointState(index).value).toStrictEqual(targetValue);
   });
 }
 
@@ -43,21 +43,21 @@ describe("Testing set type configuration:\n", () => {
   };
 
   describe("Testing the 'setPoint' method:\n", () => {
-    const dp = initDataProcessor(config, {});
+    const scale = initScaleProcessor(config, {});
 
     afterEach(() => {
-      dp.setPoints(config.values);
+      scale.setPoints(config.values);
     });
 
     it("Should return false for inappropriate index", () => {
-      expect(dp.setPoint(20, 3)).toBeFalsy();
-      expect(dp.setPoint(10, -1)).toBeFalsy();
+      expect(scale.setPoint(20, 3)).toBeFalsy();
+      expect(scale.setPoint(10, -1)).toBeFalsy();
     });
 
     it("Should return true for appropriate index", () => {
-      const appropriateIndex = Generator.getRandomInt(0, dp.lastPointIndex);
-      const value = dp.getPointState(appropriateIndex).value;
-      expect(dp.setPoint(value, appropriateIndex)).toBeTruthy();
+      const appropriateIndex = Generator.getRandomInt(0, scale.lastPointIndex);
+      const value = scale.getPointState(appropriateIndex).value;
+      expect(scale.setPoint(value, appropriateIndex)).toBeTruthy();
     });
 
     it("Should return false if value don't match point boundaries", () => {
@@ -67,7 +67,7 @@ describe("Testing set type configuration:\n", () => {
         [9, 1],
         [ALPHABET.length, 1],
       ].forEach(([val, i]) => {
-        expect(dp.setPoint(val, i)).toBeFalsy;
+        expect(scale.setPoint(val, i)).toBeFalsy;
       });
     });
 
@@ -80,25 +80,25 @@ describe("Testing set type configuration:\n", () => {
         [15, 1],
         [0, 1],
       ].forEach(([val, i]) => {
-        expect(dp.setPoint(val, i)).toBeTruthy();
-        expect(isValidPercentageAmount(dp)).toBeTruthy();
+        expect(scale.setPoint(val, i)).toBeTruthy();
+        expect(isValidPercentageAmount(scale)).toBeTruthy();
       });
     });
 
     it("Should return false if value not integer", () => {
-      expect(dp.setPoint(1.1, 0)).toBeFalsy();
+      expect(scale.setPoint(1.1, 0)).toBeFalsy();
     });
   });
 
   describe("Testing the 'movePoint' method:\n", () => {
-    const dp = initDataProcessor(config, {});
+    const scale = initScaleProcessor(config, {});
 
     afterEach(() => {
-      dp.setPoints(config.values);
+      scale.setPoints(config.values);
     });
 
     it("Should return false for inappropriate index", () => {
-      expect(dp.movePoint(5, -1)).toBeFalsy();
+      expect(scale.movePoint(5, -1)).toBeFalsy();
     });
 
     it("Should return true for appropriate index and change point value", () => {
@@ -107,12 +107,12 @@ describe("Testing set type configuration:\n", () => {
         [-20, 1, 0],
         [ALPHABET.length - 1, 1, 25],
         [ALPHABET.length - 1, 0, 25],
-      ], dp);
+      ], scale);
     });
 
     it("Should take negative offset", () => {
-      expect(dp.movePoint(-5, 0)).toBeTruthy();
-      expect(dp.getPointState(0).value).toStrictEqual(5);
+      expect(scale.movePoint(-5, 0)).toBeTruthy();
+      expect(scale.getPointState(0).value).toStrictEqual(5);
     });
 
     it("Should take non-integer offset", () => {
@@ -120,13 +120,13 @@ describe("Testing set type configuration:\n", () => {
         [-5.1, 0, 5],
         [5.1, 0, 10],
         [5.5, 0, 16],
-      ], dp);
+      ], scale);
     });
 
     it("Should return false if offset is insignificant (less then 0.5 of step value)", () => {
-      expect(dp.movePoint(0, 0)).toBeFalsy();
-      expect(dp.movePoint(0.4, 0)).toBeFalsy();
-      expect(dp.movePoint(0.5, 0)).toBeTruthy();
+      expect(scale.movePoint(0, 0)).toBeFalsy();
+      expect(scale.movePoint(0.4, 0)).toBeFalsy();
+      expect(scale.movePoint(0.5, 0)).toBeTruthy();
     });
 
     it("If offset don't match borders, should return true and shift to the largest correct value", () => {
@@ -135,31 +135,31 @@ describe("Testing set type configuration:\n", () => {
         [tooLargeOffset, 0, 20],
         [tooLargeOffset, 1, 25],
         [-tooLargeOffset, 1, 20],
-      ], dp);
+      ], scale);
 
-      dp.setPoints(config.values);
-      dp.setStep(4);
+      scale.setPoints(config.values);
+      scale.setStep(4);
       testMovePoint([
         [tooLargeOffset, 0, 18],
         [tooLargeOffset, 1, 24],
         [-tooLargeOffset, 1, 20],
-      ], dp);
+      ], scale);
 
-      dp.setStep(config.step);
+      scale.setStep(config.step);
     });
   });
 
   describe("Testing the 'addPoint' method:\n", () => {
     const values = [5, 10, 15];
-    let dp = initDataProcessor(config, { values });
+    let scale = initScaleProcessor(config, { values });
 
     afterEach(() => {
-      dp = initDataProcessor(config, { values });
+      scale = initScaleProcessor(config, { values });
     });
 
     it("Should return false if index incorrect", () => {
-      expect(dp.addPoint(0, -1)).toBeFalsy();
-      expect(dp.addPoint(ALPHABET.length - 1, 15)).toBeFalsy();
+      expect(scale.addPoint(0, -1)).toBeFalsy();
+      expect(scale.addPoint(ALPHABET.length - 1, 15)).toBeFalsy();
     });
 
     it("Should return false if value isn't within the borders", () => {
@@ -173,7 +173,7 @@ describe("Testing set type configuration:\n", () => {
         [14, 3],
         [26, 3],
       ].forEach(([value, index]) => {
-        expect(dp.addPoint(value, index)).toBeFalsy();
+        expect(scale.addPoint(value, index)).toBeFalsy();
       });
     });
 
@@ -183,34 +183,34 @@ describe("Testing set type configuration:\n", () => {
         [25, 4],
         [12, 3],
       ].forEach(([value, index]) => {
-        expect(dp.addPoint(value, index)).toBeTruthy();
+        expect(scale.addPoint(value, index)).toBeTruthy();
       });
-      expect(getPointValues(dp)).toEqual([0, 5, 10, 12, 15, 25]);
-      expect(isValidPercentageAmount(dp)).toBeTruthy();
+      expect(getPointValues(scale)).toEqual([0, 5, 10, 12, 15, 25]);
+      expect(isValidPercentageAmount(scale)).toBeTruthy();
     });
   });
 
   describe("Testing the 'removePoint' method:\n", () => {
-    let dp = initDataProcessor(config);
+    let scale = initScaleProcessor(config);
 
     afterEach(() => {
-      dp = initDataProcessor(config);
+      scale = initScaleProcessor(config);
     });
 
     it("Should return false if index incorrect", () => {
-      expect(dp.removePoint(-1)).toBeFalsy();
-      expect(dp.removePoint(2)).toBeFalsy();
+      expect(scale.removePoint(-1)).toBeFalsy();
+      expect(scale.removePoint(2)).toBeFalsy();
     });
 
     it("Should return true if index correct", () => {
-      expect(dp.removePoint(1)).toBeTruthy();
-      expect(getPointValues(dp)).toStrictEqual([config.values[0]]);
-      expect(isValidPercentageAmount(dp)).toBeTruthy();
+      expect(scale.removePoint(1)).toBeTruthy();
+      expect(getPointValues(scale)).toStrictEqual([config.values[0]]);
+      expect(isValidPercentageAmount(scale)).toBeTruthy();
     });
 
     it("Should return false if there is last point", () => {
-      expect(dp.removePoint(1)).toBeTruthy();
-      expect(dp.removePoint(0)).toBeFalsy();
+      expect(scale.removePoint(1)).toBeTruthy();
+      expect(scale.removePoint(0)).toBeFalsy();
     });
   });
 });
@@ -225,21 +225,21 @@ describe("Testing range type configuration:\n", () => {
   };
 
   describe("Testing the 'setPoint' method:\n", () => {
-    const dp = initDataProcessor(config);
+    const scale = initScaleProcessor(config);
 
     afterEach(() => {
-      dp.setPoints(config.values);
+      scale.setPoints(config.values);
     });
 
     it("Should return false for inappropriate index", () => {
-      expect(dp.setPoint(0, 4)).toBeFalsy();
-      expect(dp.setPoint(-1, 0)).toBeFalsy();
+      expect(scale.setPoint(0, 4)).toBeFalsy();
+      expect(scale.setPoint(-1, 0)).toBeFalsy();
     });
 
     it("Should return true for appropriate index", () => {
-      const appropriateIndex = Generator.getRandomInt(0, dp.lastPointIndex);
-      const appropriateValue = dp.getPointState(appropriateIndex).value;
-      expect(dp.setPoint(appropriateValue, appropriateIndex)).toBeTruthy();
+      const appropriateIndex = Generator.getRandomInt(0, scale.lastPointIndex);
+      const appropriateValue = scale.getPointState(appropriateIndex).value;
+      expect(scale.setPoint(appropriateValue, appropriateIndex)).toBeTruthy();
     });
 
     it("Should return false if value don't match point borders", () => {
@@ -251,7 +251,7 @@ describe("Testing range type configuration:\n", () => {
         [0.19, 2],
         [1.01, 2],
       ].forEach(([val, i]) => {
-        expect(dp.setPoint(val, i)).toBeFalsy;
+        expect(scale.setPoint(val, i)).toBeFalsy;
       });
     });
 
@@ -262,57 +262,57 @@ describe("Testing range type configuration:\n", () => {
         [0.27, 2],
         [1, 2],
       ].forEach(([val, i]) => {
-        expect(dp.setPoint(val, i)).toBeTruthy();
-        expect(isValidPercentageAmount(dp)).toBeTruthy();
+        expect(scale.setPoint(val, i)).toBeTruthy();
+        expect(isValidPercentageAmount(scale)).toBeTruthy();
       });
     });
   });
 
   describe("Testing the 'movePoint' method", () => {
-    const dp = initDataProcessor(config);
+    const scale = initScaleProcessor(config);
 
     afterEach(() => {
-      dp.setPoints(config.values);
+      scale.setPoints(config.values);
     });
 
     it("Should return false for inappropriate index", () => {
-      expect(dp.movePoint(-0.01, 3)).toBeFalsy();
-      expect(dp.movePoint(0.01, -1)).toBeFalsy();
+      expect(scale.movePoint(-0.01, 3)).toBeFalsy();
+      expect(scale.movePoint(0.01, -1)).toBeFalsy();
     });
 
     it("Should return true for appropriate index and change point value", () => {
       testMovePoint([
         [0.01, 0, 0.11],
         [0.05, 1, 0.25],
-      ], dp);
+      ], scale);
     });
 
     it("Should take negative offset", () => {
       testMovePoint([
         [-0.01, 0, 0.09],
         [-0.05, 1, 0.15],
-      ], dp);
+      ], scale);
     });
 
     it("Should return false if offset is insignificant (less then 0.5 of step value)", () => {
-      expect(dp.movePoint(0.0004, 0)).toBeFalsy();
-      expect(dp.movePoint(0.0005, 0)).toBeTruthy();
+      expect(scale.movePoint(0.0004, 0)).toBeFalsy();
+      expect(scale.movePoint(0.0005, 0)).toBeTruthy();
     });
 
     it("If the offset don't match borders, should return true and shift to the largest suitable value (in steps)", () => {
       testMovePoint([
         [-1, 1, 0.1],
         [-1, 2, 0.1],
-      ], dp);
+      ], scale);
 
-      dp.setPoints(config.values);
-      dp.setStep(0.06);
+      scale.setPoints(config.values);
+      scale.setStep(0.06);
       testMovePoint([
         [-1, 1, 0.14],
         [-1, 2, 0.18],
-      ], dp);
+      ], scale);
 
-      dp.setStep(config.step);
+      scale.setStep(config.step);
     });
   });
 });
