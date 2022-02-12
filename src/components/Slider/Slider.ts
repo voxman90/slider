@@ -1,6 +1,6 @@
 import BEMBlock from "components/BEMBlock";
 import { HORIZONTAL } from "common/constants/Constants";
-import { orientation, PointState, ModelState } from "common/types/Types";
+import { orientation, PointStatePlusIndents, PointState, IntervalState, ScaleState } from "common/types/Types";
 
 import Connect from "./Connect";
 import Ground from "./Ground";
@@ -50,9 +50,8 @@ class Slider extends BEMBlock {
     return this.handles.length + 1;
   }
 
-  public setState(state: ModelState) {
-    const { points } = state;
-    this.setHandlePositions(points);
+  public setState(state: ScaleState) {
+    this.setHandlePositions(state);
     // TODO: values, min, max, step
   }
 
@@ -67,9 +66,15 @@ class Slider extends BEMBlock {
     handle.setZIndex(zIndex);
   }
 
-  public setHandlePositions(points: Array<PointState>) {
-    points.forEach((state, id) => {
-      this.setHandlePosition(id, state);
+  public setHandlePositions(state: ScaleState) {
+    const { points, intervals } = state;
+    points.forEach((point, index) => {
+      const pointStatePlusIndents = {
+        leftIndent: intervals[index],
+        point,
+        rightIndent: intervals[index],
+      };
+      this.setHandlePosition(pointStatePlusIndents, index);
     });
   }
 
@@ -87,12 +92,12 @@ class Slider extends BEMBlock {
     }
   }
 
-  public setHandlePosition(index: number, state: PointState) {
-    const { offset, leftIndent, rightIndent } = state;
-    this.grounds[index].move(offset, this.orientation);
-    this.handles[index].setOffsetAttr(offset);
-    this.connects[index].resize(leftIndent, this.orientation);
-    this.connects[index + 1].moveAndResize(offset, rightIndent, this.orientation);
+  public setHandlePosition(state: PointStatePlusIndents, index: number) {
+    const { leftIndent, point, rightIndent } = state;
+    this.grounds[index].move(point.percent, this.orientation);
+    this.handles[index].setOffsetAttr(point.percent);
+    this.connects[index].resize(leftIndent.percent, this.orientation);
+    this.connects[index + 1].moveAndResize(point.percent, rightIndent.percent, this.orientation);
   }
 
   protected _getTemplate(): JQuery<HTMLElement> {

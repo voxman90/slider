@@ -1,26 +1,32 @@
 import * as $ from "jquery";
 
 import { HORIZONTAL } from "common/constants/Constants";
-import { Configuration, ModelState, PointState, orientation, EventWithData } from "common/types/Types";
+import { Config, ScaleState, PointStatePlusIndents, PointState, orientation, EventWithData, IntervalState } from "common/types/Types";
+import { elemName as sliderElemName } from "components/Slider/Constants";
 import Slider from "components/Slider/Slider";
 
 import Subject from "./Subject";
-import { elemName as sliderElemName } from "components/Slider/Constants";
+import MathModule from "./MathModule";
+import PercentageProcessor from "./PercentageProcessor";
 
 class View extends Subject {
   public slider: Slider;
+  protected _mm: MathModule;
+  protected _pp: PercentageProcessor;
 
-  constructor(config: Partial<Configuration>) {
+  constructor(config: Partial<Config>) {
     super();
+    this._mm = new MathModule();
+    this._pp = new PercentageProcessor(this._mm);
     const {
       orientation = HORIZONTAL,
-      points = [],
+      values = [],
     } = config;
-    let numberOfHandles = points.length;
+    let numberOfHandles = values.length;
     try {
       this._isNumberOfHandlesValid(numberOfHandles);
       this.slider = this._createSlider(numberOfHandles, orientation);
-      this.attachEventListeners();
+      this._attachEventListeners();
     } catch (err: unknown) {
       const isExpectedError = typeof err === 'string';
       if (!isExpectedError) {
@@ -30,36 +36,63 @@ class View extends Subject {
       console.warn(`The config is not valid. Error: ${err}.\nThe default config will be applied.`);
       numberOfHandles = 1;
       this.slider = this._createSlider(numberOfHandles, orientation);
-      this.attachEventListeners();
+      this._attachEventListeners();
     }
   }
 
-  public setSliderState(state: ModelState) {
+  public setScaleState(state: ScaleState): void {
     this.slider.setState(state);
   }
 
-  public setHandlePositions(points: Array<PointState>) {
-    points.forEach((state, index) => {
-      this.setHandlePosition(index, state);
-    });
+  public setPointState(state: PointStatePlusIndents, index: number): void {
+    this.slider.setHandlePosition(state, index);
   }
 
-  public setHandlePosition(index: number, state: PointState) {
-    this.slider.setHandlePosition(index, state);
-  }
-
-  public appendSliderTo(target: JQuery<HTMLElement>) {
+  public appendSliderTo(target: JQuery<HTMLElement>): void {
     this.slider.appendTo(target);
   }
 
-  public attachEventListeners() {
-    this.slider.base.attachEventListener({
-      $target: this.slider.base.$elem,
-      eventName: 'click',
-      handler: this.handleBaseClick,
-      data: {
-        view: this,
+  public notify(data?: object): void {
+    this._observers.forEach((observer) => observer.update(this, data));
+  }
+
+  protected _attachEventListeners(): void {
+    [
+      {
+        component: this.slider.base,
+        config: {
+          $target: this.slider.base.$elem,
+          eventName: 'click',
+          handler: this.handleBaseClick,
+          data: {
+            view: this,
+          },
+        },
       },
+      {
+        component: this.slider,
+        config: {
+          $target: $(document),
+          eventName: 'mousemove',
+          handler: this.handleDocumentMousemove,
+          data: {
+            view: this,
+          }, 
+        },
+      },
+      {
+        component: this.slider,
+        config: {
+          $target: $(document),
+          eventName: 'mouseup',
+          handler: this.handleDocumentMouseup,
+          data: {
+            view: this,
+          },
+        },
+      },
+    ].forEach(({ component, config }) => {
+      component.attachEventListener(config);
     });
 
     this.slider.handles.forEach((handle, index) => {
@@ -73,42 +106,18 @@ class View extends Subject {
         },
       });
     });
-
-    this.slider.attachEventListener({
-      $target: $(document),
-      eventName: 'mousemove',
-      handler: this.handleDocumentMousemove,
-      data: {
-        view: this,
-      },
-    });
-
-    this.slider.attachEventListener({
-      $target: $(document),
-      eventName: 'mouseup',
-      handler: this.handleDocumentMouseup,
-      data: {
-        view: this,
-      },
-    });
   }
 
   public handleHandleMousedown(event: EventWithData<{ view: View }>): void {
     const { data: { view }} = event;
-    view.notify({
-      type: ['handle', 'mousedown'],
-      event,
-    });
+    console.log(event)
   }
 
   public handleDocumentMousemove(event: EventWithData<{ view: View }>): void {
     const { data: { view }} = event;
     const activeHandleIndex = view.slider.activeHandleIndex;
     if (activeHandleIndex !== null) {
-      view.notify({
-        type: ['slider', 'mousemove'],
-        event,
-      });
+      console.log(event)
     }
   }
 
@@ -116,10 +125,7 @@ class View extends Subject {
     const { data: { view }} = event;
     const activeHandleIndex = view.slider.activeHandleIndex;
     if (activeHandleIndex !== null) {
-      view.notify({
-        type: ['slider', 'mouseup'],
-        event,
-      });
+      console.log(event)
     }
   }
 
@@ -139,11 +145,51 @@ class View extends Subject {
         || $(target).hasClass(connectClassName)
       )
     ) {
-      view.notify({
-        type: ['base', 'click'],
-        event,
-      });
+      console.log(event);
     }
+  }
+
+  protected _getRelativeToSliderBasePercent(view: View, event: MouseEvent): number | null {
+    const base = view.slider.base.$elem.get(0);
+    if (base === undefined) {
+      return null;
+    }
+
+    return this._getRelativePercent(event, base, this.slider.orientation);
+  }
+
+  protected _getRelativePercent(event: MouseEvent, elem: HTMLElement, orientation: orientation): number {
+    const rect = elem.getBoundingClientRect();
+    if (orientation === HORIZONTAL) {
+      const offset = this._mm.sub(event.clientX, rect.left);
+      return this._pp.reflectOnScale(offset, 0, rect.width);
+    }
+
+    const offset = this._mm.sub(event.clientY, rect.top);
+    return this._pp.reflectOnScale(offset, 0, rect.height);
+  }
+
+  protected _getRelativeOffset(event: MouseEvent, rect: DOMRect): number {
+    if (this.slider.orientation === HORIZONTAL) {
+      return this._getRelativeOffsetForAxisX(event, rect);
+    }
+
+    return this._getRelativeOffsetForAxisY(event, rect);
+  }
+
+  protected _getRelativeCoordinates(event: MouseEvent, rect: DOMRect): { offsetX: number, offsetY: number } {
+    return {
+      offsetX: this._getRelativeOffsetForAxisX(event, rect),
+      offsetY: this._getRelativeOffsetForAxisY(event, rect),
+    }
+  }
+
+  protected _getRelativeOffsetForAxisX(event: MouseEvent, rect: DOMRect): number {
+    return this._mm.sub(event.clientX, rect.left);
+  }
+
+  protected _getRelativeOffsetForAxisY(event: MouseEvent, rect: DOMRect): number {
+    return this._mm.sub(event.clientY, rect.top);
   }
 
   private _createSlider(numberOfHandles: number, orientation: orientation): Slider {
@@ -158,10 +204,6 @@ class View extends Subject {
     if (numberOfHandles === 0) {
       throw 'number of handles is zero';
     }
-  }
-
-  public notify(data?: object): void {
-    this._observers.forEach((observer) => observer.update(this, data));
   }
 }
 

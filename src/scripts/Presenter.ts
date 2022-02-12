@@ -1,49 +1,41 @@
-import { ModelChanges, PointState, ModelState, EventWithData, ViewChanges } from 'common/types/Types';
+import { ModelChanges, PointState, IntervalState, ScaleState, ViewChanges, PointStatePlusIndents } from 'common/types/Types';
 
 import Model from './Model';
 import View from './View';
 import Observer from './Observer';
 import Subject from './Subject';
-import PercentageProcessor from './PercentageProcessor';
-import MathModule from './MathModule';
-
-interface viewHandlerMatrix {
-  [EventTarget: string]: {
-    [EventType: string]: <T>(view: View, event: EventWithData<T>) => void;
-  }
-}
 
 class Presenter extends Observer {
   protected _model: Model;
   protected _views: Array<View>;
-  protected _mm: MathModule;
-  protected _pp: PercentageProcessor;
 
   constructor(model: Model) {
     super();
-    this._mm = new MathModule();
-    this._pp = new PercentageProcessor(this._mm);
     this._model = model;
     this._views = [];
   }
 
-  public update(subject: Subject, data: ModelChanges | ViewChanges<any>): void {
+  public update(subject: Subject, data: ModelChanges | ViewChanges<unknown>): void {
     if (
       this._isModel(subject)
       && this._model === subject
+      && this._isModelChanges(data)
     ) {
-      this._processModelUpdate(subject, data as ModelChanges);
+      this._processModelUpdate(subject, data);
     }
 
-    if (this._isView(subject)) {
-      this._processViewUpdate(subject, data as ViewChanges<any>);
+    if (
+      this._isView(subject)
+      && this._isViewChanges(data)
+    ) {
+      this._processViewUpdate(subject, data);
     }
   }
 
   public attachToModel(model: Model): void {
     this._model.detach(this);
-    model.attach(this);
     this._model = model;
+    model.attach(this);
   }
 
   public attachToView(view: View): boolean {
@@ -63,116 +55,79 @@ class Presenter extends Observer {
     if (isViewAttached) {
       this._views.splice(index, 1);
     }
+
     view.detach(this);
   }
 
-  protected _processModelUpdate(model: Model, changes: ModelChanges) {
+  protected _processModelUpdate(model: Model, changes: ModelChanges): void {
     if (changes.scope === 'point') {
-      const index = changes.index;
-      if (index !== undefined) {
-        const handleState = this._getPointState(model, index);
-        this._views.forEach((view) => {
-          this._updateHandleState(view, index, handleState);
-        });
-      }
-    } else {
-      const modelState = this._getModelState(model);
+      const index = changes.index || 0;
+      const pointStatePlusIndents = this._getPointStatePlusIndents(model, index);
       this._views.forEach((view) => {
-        this._updateSliderState(view, modelState);
+        this._updatePointState(view, pointStatePlusIndents, index);
+      });
+    } else {
+      const modelState = this._getScaleState(model);
+      this._views.forEach((view) => {
+        this._updateScaleState(view, modelState);
       });
     }
   }
 
-  protected _updateHandleState(view: View, index: number, state: PointState) {
-    view.setHandlePosition(index, state);
+  protected _updatePointState(view: View, state: PointStatePlusIndents, index: number) {
+    view.setPointState(state, index);
   }
 
-  protected _updateSliderState(view: View, state: ModelState) {
-    view.setSliderState(state);
+  protected _updateScaleState(view: View, state: ScaleState) {
+    view.setScaleState(state);
   }
 
-  protected _getModelState(model: Model): ModelState {
-    return model.getState();
+  protected _getScaleState(model: Model): ScaleState {
+    return model.getScaleState();
   }
 
   protected _getPointState(model: Model, index: number): PointState {
     return model.getPointState(index);
   }
 
+  protected _getPointStatePlusIndents(model: Model, index: number): PointStatePlusIndents {
+    return {
+      leftIndent: this._getIntervalState(model, index),
+      point: this._getPointState(model, index),
+      rightIndent: this._getIntervalState(model, index + 1),
+    }
+  }
+
+  protected _getIntervalState(model: Model, index: number): IntervalState {
+    return model.getIntervalState(index);
+  }
+
   protected _processViewUpdate<T>(view: View, data: ViewChanges<T>): void {
-    const viewHandlerMatrix: viewHandlerMatrix = {
-      'base': {
-        'click': this._processViewSliderBaseClick,
-      },
-      'handle': {
-        'mousedown': this._processViewSliderHandleMousedown,
-      },
-      'window': {
-        'mousemove': this._processViewSliderWindowMousemove,
-        'mouseup': this._processViewSliderWindowMouseup,
-      },
-    };
-    const {
-      type: [eventTarget, eventType],
-      event,
-    } = data;
-    viewHandlerMatrix[eventTarget][eventType]?.call(this, view, event);
+    console.log(data);
   }
 
-  protected _getSliderBaseRelativePosition(view: View, event: EventWithData<any>): any {
-    const $base = view.slider.base.$elem;
-    const baseRect = this._getBoundClientRect($base);
-    if (baseRect === null) {
-      return null;
-    }
+  protected _viewPointUpdate(view: View): void {
 
-    const { x: basePageX, y: basePageY } = baseRect;
-    const { pageX, pageY } = event;
-    console.log($base.offset(), baseRect, pageX, pageY)
   }
 
-  private _getRelativeCoordinatesPercentage(baseWidth: number, baseHeight: number, left: number, top: number) {
-    this._pp.reflectOnScale
-    return {
-      offsetX: 1,
-      offsetY: 1,
-    };
+  protected _viewScaleUpdate(view: View): void {
+    
   }
 
-  private _getRelativePointCoordinates(pointClientX: number, pointClientY: number, basePageX: number, basePageY: number) {
-    return {
-      left: this._mm.sub(pointClientX, basePageX),
-      top: this._mm.sub(pointClientY, basePageY),
-    };
-  }
+  protected _viewGridUpdate(view: View): void {
 
-  protected _getBoundClientRect($elem: JQuery<HTMLElement>): DOMRect | null {
-    const elem = $elem.get(0);
-    if (elem === undefined) {
-      return null;
-    }
-
-    return elem.getBoundingClientRect();
-  }
-
-  protected _processViewSliderBaseClick<T>(view: View, event: EventWithData<T>): void {
-    this._getSliderBaseRelativePosition(view, event)
-  }
-
-  protected _processViewSliderHandleMousedown<T>(view: View, event: EventWithData<T>): void {
-    console.log(event)
-  }
-
-  protected _processViewSliderWindowMousemove<T>(view: View, event: EventWithData<T>): void {
-    console.log(event)
-  }
-
-  protected _processViewSliderWindowMouseup<T>(view: View, event: EventWithData<T>): void {
-    console.log(event)
   }
 
   protected _isModel(subject: Subject): subject is Model {
     return subject instanceof Model;
+  }
+
+  protected _isModelChanges(data: ModelChanges | ViewChanges<unknown>): data is ModelChanges {
+    return data.hasOwnProperty('scope');
+  }
+  
+  protected _isViewChanges(data: ModelChanges | ViewChanges<unknown>): data is ViewChanges<unknown> {
+    return data.hasOwnProperty('event');
   }
 
   protected _isView(subject: Subject): subject is View {

@@ -12,7 +12,8 @@ const config = {
   type: 'range',
   orientation: HORIZONTAL,
   range: [0, 10],
-  points: [2, 6, 8],
+  step: 1,
+  values: [2, 6, 8],
   connects: [false, true, false, true],
 };
 const model = new Model(config);
@@ -20,7 +21,7 @@ const presenter = new Presenter(model);
 const view = new View(config);
 presenter.attachToModel(model);
 presenter.attachToView(view);
-model.notifyAll();
+model.notifyScopeAll();
 
 const container = $('.container');
 view.appendSliderTo(container);

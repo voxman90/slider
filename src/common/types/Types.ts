@@ -36,58 +36,49 @@ export interface Config {
   prettifier: (x: string) => string;
 }
 
-export interface ViewChanges<T> {
+export type ViewChanges<T> = {
   type: Array<string>;
   event: JQuery.TriggeredEvent<EventTarget, T, EventTarget, EventTarget>;
 }
 
-export interface ModelChanges {
-  scope: string,
-  index?: number,
-}
+export type ModelChanges = {
+  scope: string;
+  index?: number;
+};
 
-export interface HandleState {
-  leftIndent: number,
-  offset: number,
-  rightIndent: number,
-  view: NonNullable<primitive>,
-}
+export type Point = {
+  value: number;
+  percent: number;
+};
 
-export interface SliderState {
-  positions: Array<HandleState>,
-  values: Array<NonNullable<primitive>>,
-  min: NonNullable<primitive>,
-  max: NonNullable<primitive>,
-  step: number,
-}
+export type PointState = {
+  value: number;
+  percent: number;
+  view: NonNullable<primitive>;
+};
 
-export interface PointState {
-  value: number,
-  percent: number,
-  view: NonNullable<primitive>,
-}
+export type PointStatePlusIndents = {
+  leftIndent: IntervalState;
+  point: PointState;
+  rightIndent: IntervalState;
+};
 
-export interface IntervalState {
-  value: number,
-  percent: number,
-}
+export type Interval = {
+  from: Point;
+  to: Point;
+  value: number;
+  percent: number;
+};
 
-export interface ScaleState {
-  points: Array<PointState>,
-  intervals: Array<IntervalState>,
-  min: PointState,
-  max: PointState,
-  step: number,
-}
+export type IntervalState = {
+  value: number;
+  percent: number;
+};
 
-export interface Point {
-  value: number,
-  percent: number,
-}
-
-export interface Interval {
-  from: Point,
-  to: Point,
-  value: number,
-  percent: number,
-}
+export type ScaleState = {
+  points: Array<PointState>;
+  intervals: Array<IntervalState>;
+  min: PointState;
+  max: PointState;
+  step: number;
+};
