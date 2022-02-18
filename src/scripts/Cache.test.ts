@@ -1,4 +1,4 @@
-import { NonBottomValue } from 'common/types/Types';
+import { NonBottomValue } from 'common/types/types';
 
 import Cache from './Cache';
 import { createTuplesArray } from './TuplesArray';

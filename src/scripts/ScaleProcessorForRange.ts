@@ -1,4 +1,4 @@
-import { Config } from "common/types/Types";
+import { Config } from "common/types/types";
 
 import ScaleProcessor from './ScaleProcessor';
 

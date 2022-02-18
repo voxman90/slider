@@ -1,13 +1,13 @@
 import BEMElement from "components/BEMElement";
-import { HORIZONTAL } from "common/constants/Constants";
-import { orientation } from "common/types/Types";
+import { Orientation.Horizontal } from "common/constants/Constants";
+import { orientation } from "common/types/types";
 
 import Slider from "./Slider";
-import { elemName } from "./Constants";
+import { elemName } from "./constants";
 
 const modifier = {
   VISIBLE: 'visible',
-  ORIENTATION_HORIZONTAL: 'orientation_horizontal',
+  ORIENTATION_Orientation.Horizontal: 'orientation_Orientation.Horizontal',
   ORIENTATION_VERTICAL: 'orientation_vertical',
 };
 
@@ -16,13 +16,29 @@ class Connect extends BEMElement {
   private _index: number;
   private _offset: number;
   private _size: number;
+  private _isVisible: boolean;
 
   constructor(block: Slider, index: number = 0) {
     super(elemName.CONNECT, block);
     this._index = index;
     this._offset = 0;
     this._size = 0;
+    this._isVisible = true;
     this.$elem = this._getTemplate();
+  }
+
+  public enable(): void {
+    if (this._isVisible) {
+      this.$elem.show();
+      this._isVisible = true;
+    }
+  }
+
+  public disable(): void {
+    if (this._isVisible) {
+      this.$elem.hide();
+      this._isVisible = false;
+    }
   }
 
   public setIndexAttr(index: number = 0) {
@@ -30,17 +46,17 @@ class Connect extends BEMElement {
     this.$elem.attr('data-item', index);
   }
 
-  public move(offset: number = 0, orientation: orientation = HORIZONTAL): void {
+  public move(offset: number = 0, orientation: Orientation = Orientation.Horizontal): void {
     this._offset = offset;
     this._transform(offset, this._size, orientation);
   }
 
-  public resize(size: number = 0, orientation: orientation = HORIZONTAL): void {
+  public resize(size: number = 0, orientation: Orientation = Orientation.Horizontal): void {
     this._size = size;
     this._transform(this._offset, size, orientation);
   }
 
-  public moveAndResize(offset: number = 0, size: number = 0, orientation: orientation = HORIZONTAL) {
+  public moveAndResize(offset: number = 0, size: number = 0, orientation: Orientation = Orientation.Horizontal) {
     this._offset = offset;
     this._size = size;
     this._transform(offset, size, orientation);
@@ -60,8 +76,8 @@ class Connect extends BEMElement {
       .css('transform', 'translate(0px, 0px) scale(1, 1)');
   }
 
-  protected _transform(offset: number, size: number, orientation: orientation) {
-    if (orientation === HORIZONTAL) {
+  protected _transform(offset: number, size: number, orientation: Orientation) {
+    if (orientation === Orientation.Horizontal) {
       return this.$elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 1)`);
     }
 

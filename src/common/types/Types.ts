@@ -1,14 +1,18 @@
+import { TDivisionState, TGridConfig } from "components/Grid/types";
+
 export type primitive = number | string | boolean | symbol | bigint | null | undefined;
 export type NonBottomValue = NonNullable<primitive> | object;
 export type NonUndefined = NonBottomValue | null;
 
-export type horizontal = 1;
-export type vertical = 0;
-export type orientation = horizontal | vertical;
+export enum Orientation {
+  Horizontal = 1,
+  Vertical = 0,
+};
 
-export type left = -1;
-export type right = 1;
-export type direction = left | right;
+export enum Direction {
+  Left = -1,
+  Right = 1,
+};
 
 type ArrayLengthMutationKeys = "pup" | "push" | "shift" | "unshift" | 'splice' | number;
 export type FixedLengthArray<T extends Array<NonUndefined>> =
@@ -17,7 +21,7 @@ export type FixedLengthArray<T extends Array<NonUndefined>> =
 
 export type EventWithData<Data> = JQuery.TriggeredEvent<EventTarget, Data, EventTarget, EventTarget>;
 
-export interface Config {
+export type Config = {
   type: string;
   step: number;
   min: number;
@@ -26,20 +30,20 @@ export interface Config {
   values: Array<number>;
   connects: Array<boolean>;
   set: Array<NonBottomValue>;
-  direction: 'ltr' | 'rtl';
-  orientation: orientation;
+  direction: Direction;
+  orientation: Orientation;
   hasTooltips: boolean;
-  hasScale: boolean;
-  scaleMap: Array<number>;
+  grid: TGridConfig;
   isCached: boolean;
   cacheCapacity: number;
+  filter: (x: number) => boolean;
   prettifier: (x: string) => string;
 }
 
 export type ViewChanges<T> = {
   type: Array<string>;
   event: JQuery.TriggeredEvent<EventTarget, T, EventTarget, EventTarget>;
-}
+};
 
 export type ModelChanges = {
   scope: string;
@@ -54,7 +58,7 @@ export type Point = {
 export type PointState = {
   value: number;
   percent: number;
-  view: NonNullable<primitive>;
+  view: string;
 };
 
 export type PointStatePlusIndents = {

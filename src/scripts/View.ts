@@ -1,8 +1,7 @@
 import * as $ from "jquery";
 
-import { HORIZONTAL } from "common/constants/Constants";
-import { Config, ScaleState, PointStatePlusIndents, PointState, orientation, EventWithData, IntervalState } from "common/types/Types";
-import { elemName as sliderElemName } from "components/Slider/Constants";
+import { Config, ScaleState, PointStatePlusIndents, PointState, Orientation, EventWithData, IntervalState } from "common/types/types";
+import { elemName as sliderElemName } from "components/Slider/constants";
 import Slider from "components/Slider/Slider";
 
 import Subject from "./Subject";
@@ -19,7 +18,7 @@ class View extends Subject {
     this._mm = new MathModule();
     this._pp = new PercentageProcessor(this._mm);
     const {
-      orientation = HORIZONTAL,
+      orientation = Orientation.Horizontal,
       values = [],
     } = config;
     let numberOfHandles = values.length;
@@ -158,9 +157,9 @@ class View extends Subject {
     return this._getRelativePercent(event, base, this.slider.orientation);
   }
 
-  protected _getRelativePercent(event: MouseEvent, elem: HTMLElement, orientation: orientation): number {
+  protected _getRelativePercent(event: MouseEvent, elem: HTMLElement, orientation: Orientation): number {
     const rect = elem.getBoundingClientRect();
-    if (orientation === HORIZONTAL) {
+    if (orientation === Orientation.Horizontal) {
       const offset = this._mm.sub(event.clientX, rect.left);
       return this._pp.reflectOnScale(offset, 0, rect.width);
     }
@@ -170,7 +169,7 @@ class View extends Subject {
   }
 
   protected _getRelativeOffset(event: MouseEvent, rect: DOMRect): number {
-    if (this.slider.orientation === HORIZONTAL) {
+    if (this.slider.orientation === Orientation.Horizontal) {
       return this._getRelativeOffsetForAxisX(event, rect);
     }
 
@@ -192,7 +191,7 @@ class View extends Subject {
     return this._mm.sub(event.clientY, rect.top);
   }
 
-  private _createSlider(numberOfHandles: number, orientation: orientation): Slider {
+  private _createSlider(numberOfHandles: number, orientation: Orientation): Slider {
     return new Slider({ numberOfHandles, orientation });
   }
 

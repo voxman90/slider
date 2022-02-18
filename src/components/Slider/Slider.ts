@@ -1,13 +1,13 @@
 import BEMBlock from "components/BEMBlock";
-import { HORIZONTAL } from "common/constants/Constants";
-import { orientation, PointStatePlusIndents, PointState, IntervalState, ScaleState } from "common/types/Types";
+import { Orientation, PointStatePlusIndents, PointState, IntervalState, ScaleState } from "common/types/types";
+import Grid from "components/Grid/Grid";
 
 import Connect from "./Connect";
 import Ground from "./Ground";
 import Handle from "./Handle";
 import Track from "./Track";
 import Base from "./Base";
-import { BLOCK_NAME } from "./Constants";
+import { BLOCK_NAME } from "./constants";
 import "./Slider.scss";
 
 const modifier = {
@@ -22,14 +22,17 @@ class Slider extends BEMBlock {
   public connects: Array<Connect>;
   public grounds: Array<Ground>;
   public handles: Array<Handle>;
+  public grid?: Grid;
   public activeHandleIndex: number | null;
-  public orientation: orientation;
+  public orientation: Orientation;
 
   constructor (config: any) {
     super(BLOCK_NAME);
     const {
-      orientation = HORIZONTAL,
+      orientation = Orientation.Horizontal,
       numberOfHandles = 1,
+      connectsMap = [],
+      grid,
     } = config;
     this.activeHandleIndex = null;
     this.orientation = orientation;
@@ -39,6 +42,8 @@ class Slider extends BEMBlock {
     this.connects = this._createConnects(numberOfHandles);
     this.grounds = this._createGrounds(numberOfHandles);
     this.handles = this._createHandles(numberOfHandles);
+    this._enableConnects(connectsMap);
+    this.grid = this._createGrid(10);
     this._connectSliderElements();
   }
 
@@ -72,7 +77,7 @@ class Slider extends BEMBlock {
       const pointStatePlusIndents = {
         leftIndent: intervals[index],
         point,
-        rightIndent: intervals[index],
+        rightIndent: intervals[index + 1],
       };
       this.setHandlePosition(pointStatePlusIndents, index);
     });
@@ -101,7 +106,7 @@ class Slider extends BEMBlock {
   }
 
   protected _getTemplate(): JQuery<HTMLElement> {
-    const orientation = (this.orientation === HORIZONTAL)
+    const orientation = (this.orientation === Orientation.Horizontal)
       ? this.getModifier(modifier.ORIENTATION_HORIZONTAL)
       : this.getModifier(modifier.ORIENTATION_VERTICAL);
     return super._getTemplate(orientation);
@@ -138,6 +143,13 @@ class Slider extends BEMBlock {
     return grounds;
   }
 
+  private _createGrid(numberOfDivisions: number): Grid {
+    return new Grid({
+      numberOfDivisions,
+      orientation: this.orientation,
+    });
+  }
+
   private _createHandle(index: number): Handle {
     return new Handle(this, index);
   }
@@ -164,6 +176,29 @@ class Slider extends BEMBlock {
       connects.push(connect);
     }
     return connects;
+  }
+
+  protected _enableConnects(connectsMap: Array<boolean> = []): void {
+    if (connectsMap.length === 0) {
+      connectsMap = this._getDefaultConnectsMap();
+    }
+
+    console.log(connectsMap)
+
+    this.connects.forEach((connect, i) => {
+      if (connectsMap[i]) {
+        connect.enable();
+      } else {
+        connect.disable();
+      }
+    });
+  }
+
+  protected _getDefaultConnectsMap(): Array<boolean> {
+    const connectsMap: Array<boolean> = [];
+    const base = (this.numberOfHandles + 1) % 2;
+    this.connects.forEach((_, i) => connectsMap.push((base + i) % 2 === 1));
+    return connectsMap;
   }
 }
 

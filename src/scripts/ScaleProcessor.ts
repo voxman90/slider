@@ -1,5 +1,4 @@
-import { LEFT_DIRECTION, RIGHT_DIRECTION } from "common/constants/Constants";
-import { Config, direction, Point, Interval, primitive, PointState, IntervalState, ScaleState } from "common/types/Types";
+import { Config, Direction, Point, Interval, primitive, PointState, IntervalState, ScaleState } from "common/types/types";
 
 import PercentageProcessorFixed from "./PercentageProcessorFixed";
 import MathModule from "./MathModule";
@@ -304,11 +303,11 @@ abstract class ScaleProcessor<K extends keyof Config> {
     return this._getPointUnsafe(index).value;
   }
 
-  protected _getView(val: number): NonNullable<primitive> {
+  protected _getView(val: number): string {
     return `${val}`;
   }
 
-  protected _getTargetValue(steps: number, direction: direction, index: number): number {
+  protected _getTargetValue(steps: number, direction: Direction, index: number): number {
     const currentValue = this._getPointValue(index);
     let targetValue = this._shiftValueInSteps(currentValue, steps, direction);
     if (this._isMatchBoundary(targetValue, index, direction)) {
@@ -357,38 +356,38 @@ abstract class ScaleProcessor<K extends keyof Config> {
   }
 
   protected _getDistanceToLeftBoundary(index: number): number {
-    return this._getDistanceToBoundary(index, LEFT_DIRECTION);
+    return this._getDistanceToBoundary(index, Direction.Left);
   }
 
   protected _getDistanceToRightBoundary(index: number): number {
-    return this._getDistanceToBoundary(index, RIGHT_DIRECTION);
+    return this._getDistanceToBoundary(index, Direction.Right);
   }
 
-  protected _getDistanceToBoundary(index: number, direction: direction): number {
+  protected _getDistanceToBoundary(index: number, direction: Direction): number {
     const point = this._getPointUnsafe(index);
     const boundary = this._getBoundary(index, direction);
     return this._getDistanceBetweenPoints(point, boundary);
   }
 
   protected _getLeftBoundary(index: number): Point {
-    return this._getBoundary(index, LEFT_DIRECTION);
+    return this._getBoundary(index, Direction.Left);
   }
 
   protected _getRightBoundary(index: number): Point {
-    return this._getBoundary(index, RIGHT_DIRECTION);
+    return this._getBoundary(index, Direction.Right);
   }
 
-  protected _getBoundary(index: number, direction: direction): Point {
+  protected _getBoundary(index: number, direction: Direction): Point {
     if (
       index === 0
-      && direction === LEFT_DIRECTION
+      && direction === Direction.Left
     ) {
       return this._minBoundary;
     }
 
     if (
       index === this.lastPointIndex
-      && direction === RIGHT_DIRECTION
+      && direction === Direction.Right
     ) {
       return this._maxBoundary;
     }
@@ -404,17 +403,17 @@ abstract class ScaleProcessor<K extends keyof Config> {
     return Math.abs(this._mm.sub(y.value, x.value));
   }
 
-  protected _shiftValueInSteps(val: number, steps: number, direction: direction): number {
+  protected _shiftValueInSteps(val: number, steps: number, direction: Direction): number {
     const offset = this._convertFromSteps(steps);
     return this._shiftValue(val, offset, direction);
   }
 
-  protected _shiftValue(val: number, offset: number, direction: direction): number {
+  protected _shiftValue(val: number, offset: number, direction: Direction): number {
     return this._mm.add(val, direction * offset);
   }
 
-  protected _decomposeOffset(offset: number): [direction, number] {
-    const offsetSign = (Math.sign(offset) === 1) ? 1 : -1;
+  protected _decomposeOffset(offset: number): [Direction, number] {
+    const offsetSign = (Math.sign(offset) === 1) ? Direction.Right : Direction.Left;
     const offsetAbs = offsetSign * offset;
     return [offsetSign, offsetAbs];
   }
@@ -486,14 +485,14 @@ abstract class ScaleProcessor<K extends keyof Config> {
   }
 
   protected _isMatchLeftBoundary(val: number, index: number): boolean {
-    return this._isMatchBoundary(val, index, LEFT_DIRECTION);
+    return this._isMatchBoundary(val, index, Direction.Left);
   }
 
   protected _isMatchRightBoundary(val: number, index: number): boolean {
-    return this._isMatchBoundary(val, index, RIGHT_DIRECTION);
+    return this._isMatchBoundary(val, index, Direction.Right);
   }
 
-  protected _isMatchBoundary(val: number, index: number, direction: direction): boolean {
+  protected _isMatchBoundary(val: number, index: number, direction: Direction): boolean {
     const boundary = this._getBoundary(index, direction);
     return direction * this._mm.sub(val, boundary.value) <= 0;
   }

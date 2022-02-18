@@ -1,5 +1,5 @@
 import { ALPHABET } from 'common/constants/Constants';
-import { Config, NonBottomValue, primitive, Point } from 'common/types/Types';
+import { Config, NonBottomValue, primitive, Point } from 'common/types/types';
 
 import ScaleProcessor from './ScaleProcessor';
 

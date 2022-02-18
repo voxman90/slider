@@ -1,6 +1,6 @@
 import * as $ from 'jquery';
 
-import { HORIZONTAL } from 'common/constants/Constants';
+import { Orientation } from 'common/types/types';
 
 import Model from './scripts/Model';
 import View from './scripts/View';
@@ -10,7 +10,7 @@ import './styles/styles.scss';
 
 const config = {
   type: 'range',
-  orientation: HORIZONTAL,
+  orientation: Orientation.Horizontal,
   range: [0, 10],
   step: 1,
   values: [2, 6, 8],

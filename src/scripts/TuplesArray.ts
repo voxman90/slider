@@ -1,4 +1,4 @@
-import { NonBottomValue } from "common/types/Types";
+import { NonBottomValue } from "common/types/types";
 
 type Tuple = [string, NonBottomValue];
 type TuplesArray = Array<Tuple>;

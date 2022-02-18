@@ -1,0 +1,49 @@
+@import "../../styles/_colors.scss";
+
+.grid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.grid__division {
+  position: absolute;
+
+  &_size_small {
+    background-color: $dark-shade-50;
+
+    .grid_orientation_horizontal & {
+      width: 1px;
+      height: 60%;
+    }
+  
+    .grid_orientation_vertical & {
+      width: 60%;
+      height: 1px;
+    }
+  }
+
+  &_size_big {
+    background-color: $dark-shade-100;
+
+    .grid_orientation_horizontal & {
+      width: 3px;
+      height: 100%;
+    }
+  
+    .grid_orientation_vertical & {
+      width: 100%;
+      height: 3px;
+    }
+  }
+}
+
+.grid__value {
+  .grid_orientation_horizontal & {
+    padding-top: 105%;
+  }
+
+  .grid_orientation_vertical & {
+    padding-left: 105%;
+  }
+}

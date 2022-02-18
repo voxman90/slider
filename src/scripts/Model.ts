@@ -1,4 +1,4 @@
-import { Config, ScaleState, PointState, IntervalState, primitive } from 'common/types/Types';
+import { Config, ScaleState, PointState, IntervalState, primitive } from 'common/types/types';
 
 import Subject from './Subject';
 import ScaleProcessorFactory from './ScaleProcessorFactory';

@@ -7,6 +7,7 @@ const elemName = {
   GROUND: "ground",
   HANDLE: "handle",
   TOOLTIP: "tooltip",
+  GRID: "grid",
 };
 
 export {

@@ -1,37 +1,41 @@
+import { Orientation, Direction } from "common/types/types";
 import BEMElement from "components/BEMElement";
 
+import { elemName, directionMatrix } from "./constants";
 import Grid from "./Grid";
-
-const ELEM_NAME = 'division';
 
 const modifier = {
   SIZE_SMALL: 'size_small',
-  SIZE_MEDIUM: 'size_medium',
+  SIZE_MIDDLE: 'size_middle',
   SIZE_BIG: 'size_big',
-}
+};
 
 class Division extends BEMElement {
   public $elem: JQuery<HTMLElement>;
+  public offset: number;
 
   constructor (block: Grid) {
-    super(ELEM_NAME, block);
+    super(elemName.DIVISION, block);
     this.$elem = this._getTemplate();
+    this.offset = 0;
   }
 
-  public setModifierSizeSmall() {
+  public setModifierSizeSmall(): void {
     this._setModifier(modifier.SIZE_SMALL);
   }
 
-  public setModifierSizeMedium() {
-    this._setModifier(modifier.SIZE_MEDIUM);
+  public setModifierSizeMiddle(): void {
+    this._setModifier(modifier.SIZE_MIDDLE);
   }
 
-  public setModifierSizeBig() {
+  public setModifierSizeBig(): void {
     this._setModifier(modifier.SIZE_BIG);
   }
 
-  protected _getTemplate() {
-    return super._getTemplate();
+  public move(offset: number, orientation: Orientation, direction: Direction): void {
+    this.offset = offset;
+    const dir = directionMatrix[orientation][direction];
+    this.$elem.css(dir, offset);
   }
 }
 

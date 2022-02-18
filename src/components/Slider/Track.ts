@@ -1,7 +1,7 @@
 import BEMElement from "components/BEMElement";
 
 import Slider from "./Slider";
-import { elemName } from "./Constants";
+import { elemName } from "./constants";
 
 class Track extends BEMElement {
   public $elem: JQuery<HTMLElement>;

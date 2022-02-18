@@ -47,7 +47,7 @@ abstract class BEMComponent {
     $target.off(uniqueEventName);
   }
 
-  public appendTo(target: JQuery<HTMLElement> | BEMComponent) {
+  public appendTo(target: JQuery<HTMLElement> | BEMComponent): JQuery<HTMLElement> {
     if (target instanceof BEMComponent) {
       return this.$elem.appendTo(target.$elem);
     }
@@ -55,7 +55,7 @@ abstract class BEMComponent {
     return this.$elem.appendTo(target);
   }
 
-  public prependTo(target: JQuery<HTMLElement> | BEMComponent) {
+  public prependTo(target: JQuery<HTMLElement> | BEMComponent): JQuery<HTMLElement> {
     if (target instanceof BEMComponent) {
       return this.$elem.appendTo(target.$elem);
     }
@@ -63,8 +63,16 @@ abstract class BEMComponent {
     return this.$elem.prependTo(target);
   }
 
-  public remove() {
-    this.$elem.remove();
+  public remove(): JQuery<HTMLElement> {
+    return this.$elem.remove();
+  }
+
+  public empty(): JQuery<HTMLElement> {
+    return this.$elem.empty();
+  }
+
+  public detach(): JQuery<HTMLElement> {
+    return this.$elem.detach();
   }
 
   protected abstract get className(): string;

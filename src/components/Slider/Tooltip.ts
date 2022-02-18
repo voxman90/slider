@@ -1,9 +1,8 @@
 import BEMElement from "components/BEMElement";
-import { HORIZONTAL } from "common/constants/Constants";
-import { orientation } from "common/types/Types";
+import { Orientation } from "common/types/types";
 
 import Slider from "./Slider";
-import { elemName } from "./Constants";
+import { elemName } from "./constants";
 
 const modifier = {
   VISIBLE: 'visible',
@@ -30,17 +29,17 @@ class Tooltip extends BEMElement {
     this.$elem.attr('data-item', index);
   }
 
-  public move(offset: number = 0, orientation: orientation = HORIZONTAL): void {
+  public move(offset: number = 0, orientation: Orientation = Orientation.Horizontal): void {
     this._offset = offset;
     this._transform(offset, this._size, orientation);
   }
 
-  public resize(size: number = 0, orientation: orientation = HORIZONTAL): void {
+  public resize(size: number = 0, orientation: Orientation = Orientation.Horizontal): void {
     this._size = size;
     this._transform(this._offset, size, orientation);
   }
 
-  public moveAndResize(offset: number = 0, size: number = 0, orientation: orientation = HORIZONTAL) {
+  public moveAndResize(offset: number = 0, size: number = 0, orientation: Orientation = Orientation.Horizontal) {
     this._offset = offset;
     this._size = size;
     this._transform(offset, size, orientation);
@@ -60,8 +59,8 @@ class Tooltip extends BEMElement {
       .css('transform', 'translate(0px, 0px) scale(1, 1)');
   }
 
-  protected _transform(offset: number, size: number, orientation: orientation): JQuery<HTMLElement> {
-    if (orientation === HORIZONTAL) {
+  protected _transform(offset: number, size: number, orientation: Orientation): JQuery<HTMLElement> {
+    if (orientation === Orientation.Horizontal) {
       return this.$elem.css('transform', `translate(${offset}%, 0px) scale(${size}%, 1)`);
     }
 

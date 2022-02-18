@@ -1,9 +1,8 @@
 import BEMElement from "components/BEMElement";
-import { HORIZONTAL } from "common/constants/Constants";
-import { orientation } from "common/types/Types";
+import { Orientation } from "common/types/types";
 
 import Slider from "./Slider";
-import { elemName } from "./Constants";
+import { elemName } from "./constants";
 
 class Ground extends BEMElement {
   public $elem: JQuery<HTMLElement>;
@@ -13,7 +12,7 @@ class Ground extends BEMElement {
     this.$elem = this._getTemplate();
   }
 
-  public move(offset: number = 0, orientation: orientation = HORIZONTAL): void {
+  public move(offset: number = 0, orientation: Orientation = Orientation.Horizontal): void {
     this._transform(offset, orientation);
   }
 
@@ -22,8 +21,8 @@ class Ground extends BEMElement {
       .css('transform', 'translate(0px, 0px)');
   }
 
-  private _transform(offset: number, orientation: orientation) {
-    if (orientation === HORIZONTAL) {
+  private _transform(offset: number, orientation: Orientation) {
+    if (orientation === Orientation.Horizontal) {
       return this.$elem.css('transform', `translate(${offset}%, 0px)`);
     }
 

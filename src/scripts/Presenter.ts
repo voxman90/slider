@@ -1,4 +1,4 @@
-import { ModelChanges, PointState, IntervalState, ScaleState, ViewChanges, PointStatePlusIndents } from 'common/types/Types';
+import { ModelChanges, PointState, IntervalState, ScaleState, ViewChanges, PointStatePlusIndents } from 'common/types/types';
 
 import Model from './Model';
 import View from './View';

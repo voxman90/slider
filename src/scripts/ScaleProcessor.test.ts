@@ -1,5 +1,5 @@
 import { ALPHABET } from "common/constants/Constants";
-import { Config } from "common/types/Types";
+import { Config } from "common/types/types";
 
 import ScaleProcessorForRange from "./ScaleProcessorForRange";
 import ScaleProcessorForSet from "./ScaleProcessorForSet";

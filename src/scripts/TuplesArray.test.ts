@@ -1,4 +1,4 @@
-import { NonBottomValue } from "common/types/Types";
+import { NonBottomValue } from "common/types/types";
 
 import { createTuplesArray, removeTuplesWithDuplicateKeys } from "./TuplesArray";
 

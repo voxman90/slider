@@ -1,5 +1,5 @@
 import { ALPHABET } from 'common/constants/Constants';
-import { PointState, primitive, ScaleState } from 'common/types/Types';
+import { PointState, primitive, ScaleState } from 'common/types/types';
 
 import Model from './Model';
 import Observer from './Observer';
